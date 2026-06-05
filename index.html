@@ -2077,16 +2077,16 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
           <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>내 배너 <span style="font-weight:300;font-size:.68rem;color:var(--text-light)">— 항상 맨 위에 고정</span>
         </div>
         <div id="myBannerPreview" style="display:none;margin-bottom:10px;border:1px solid var(--border)">
-          <div id="myBannerPreviewBox" style="overflow:hidden;aspect-ratio:5/1;cursor:grab;position:relative;background:#000">
-            <img id="myBannerPreviewImg" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);transform-origin:center center;max-width:none;width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-drag:none" draggable="false">
+          <div id="myBannerPreviewBox" style="overflow:hidden;aspect-ratio:5/1;cursor:grab;position:relative;background:#000;touch-action:none">
+            <img id="myBannerPreviewImg" style="position:absolute;left:0;top:0;width:auto;height:auto;max-width:none;display:block;user-select:none;-webkit-user-drag:none;transform-origin:0 0" draggable="false">
           </div>
           <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--border);background:var(--bg)">
             <span style="font-size:.68rem;color:var(--text-sub);white-space:nowrap">확대</span>
-            <input type="range" id="mbZoom" min="100" max="400" value="100" step="5" style="flex:1" oninput="onMyBannerZoom(this.value)">
+            <input type="range" id="mbZoom" min="100" max="400" value="100" step="1" style="flex:1" oninput="onMyBannerZoom(this.value)">
             <span id="mbZoomVal" style="font-size:.68rem;color:var(--text-light);min-width:34px;text-align:right">100%</span>
             <button type="button" onclick="resetMyBannerView()" style="padding:4px 8px;font-size:.66rem;border:1px solid var(--border-h);background:var(--bg);color:var(--text-sub);border-radius:4px;cursor:pointer">초기화</button>
           </div>
-          <div style="font-size:.66rem;color:var(--text-light);padding:0 10px 8px">💡 이미지를 드래그하면 위치를 조정할 수 있어요.</div>
+          <div style="font-size:.66rem;color:var(--text-light);padding:0 10px 8px">💡 이미지를 드래그하면 위치를 조정할 수 있어요. 확대는 100%부터 시작해요 (=이미지 전체가 5:1 안에 맞춰 들어간 상태).</div>
         </div>
         <div class="ef" style="margin-bottom:8px">
           <label style="font-size:.72rem;font-weight:500;margin-bottom:4px;display:block;color:var(--text-sub)">내 배너 이미지 설정</label>
@@ -5594,14 +5594,17 @@ function rHeartGrid(){
     var mbZoom = (mb.zoom!=null)?mb.zoom:1;
     var mbOX = (mb.offsetX!=null)?mb.offsetX:0;
     var mbOY = (mb.offsetY!=null)?mb.offsetY:0;
-    // 실제 ♥ 패널은 미리보기보다 작으므로 offset을 비율로 환산 (미리보기 박스 너비 대비)
-    var mbImgStyle = 'position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:cover;'
-      + 'transform:translate(calc(-50% + '+(mbOX*0.35)+'px), calc(-50% + '+(mbOY*0.35)+'px)) scale('+mbZoom+');';
+    // 미리보기와 같은 contain 좌표계로 렌더링. onload 시 실제 박스/이미지 크기로 transform 계산.
+    var mbImgStyle = 'position:absolute;left:0;top:0;width:auto;height:auto;max-width:none;display:block;transform-origin:0 0;visibility:hidden';
+    var onloadFn = 'var b=this.parentNode,iw=this.naturalWidth,ih=this.naturalHeight,bw=b.clientWidth,bh=b.clientHeight;'
+      + 'var bs=Math.min(bw/iw,bh/ih),s=bs*'+mbZoom+';'
+      + 'var tx=(bw-iw*s)/2+('+mbOX+')*s,ty=(bh-ih*s)/2+('+mbOY+')*s;'
+      + 'this.style.transform="translate("+tx+"px,"+ty+"px) scale("+s+")";this.style.visibility="visible";';
     var mbAddBtn = isVisitor
       ? '<button class="heart-add-btn" onclick="event.stopPropagation();addBannerFromVisit('+JSON.stringify({img:mb.img,url:ownerBlogUrl,label:mb.label||'',color:c,zoom:mbZoom,offsetX:mbOX,offsetY:mbOY}).replace(/"/g,'&quot;')+')" title="내 블로그에 추가">+</button>'
       : '';
     html+='<div class="heart-item" onclick="copyMyBannerUrl()" style="cursor:copy">'
-      +'<div class="heart-item-img" style="position:relative;overflow:hidden"><img src="'+mb.img+'" loading="lazy" style="'+mbImgStyle+'"></div>'
+      +'<div class="heart-item-img" style="position:relative;overflow:hidden"><img src="'+mb.img+'" loading="lazy" style="'+mbImgStyle+'" onload="'+onloadFn+'"></div>'
       +(mb.label?'<div class="heart-tooltip" style="background:'+c+'">'+esc(mb.label)+'<span class="ht-arrow" style="border-top-color:'+c+'"></span></div>':'')
       +mbAddBtn
       +'</div>';
@@ -5706,14 +5709,35 @@ function copyMyBannerUrl(){
     toast('링크가 복사되었어요!');
   });
 }
-// 내 배너 뷰 상태 (zoom/offset) — 저장 전 임시 보관
+// 내 배너 뷰 상태
+//   zoom: 1.0 = 이미지 전체가 5:1 박스에 contain된 상태 (기본). >1이면 확대.
+//   offsetX/Y: 이미지 자연 픽셀 단위 평행이동 (가운데 정렬 기준 추가 보정값)
 window._mbView = window._mbView || {zoom:1, offsetX:0, offsetY:0};
+// 미리보기 박스 크기와 이미지 자연 크기를 캐싱
+window._mbGeom = window._mbGeom || {boxW:0, boxH:0, imgW:0, imgH:0, baseScale:1};
 
+function recalcMyBannerGeom(){
+  var box=$('#myBannerPreviewBox'), img=$('#myBannerPreviewImg');
+  if(!box||!img||!img.naturalWidth)return false;
+  var g=window._mbGeom;
+  g.boxW = box.clientWidth;
+  g.boxH = box.clientHeight;
+  g.imgW = img.naturalWidth;
+  g.imgH = img.naturalHeight;
+  // contain 기준 기본 배율 (이미지 전체가 박스 안에 맞춰 들어오는 배율)
+  g.baseScale = Math.min(g.boxW/g.imgW, g.boxH/g.imgH);
+  return true;
+}
 function applyMyBannerTransform(){
   var img=$('#myBannerPreviewImg');
-  if(!img)return;
-  var v=window._mbView;
-  img.style.transform='translate(calc(-50% + '+v.offsetX+'px), calc(-50% + '+v.offsetY+'px)) scale('+v.zoom+')';
+  if(!img||!img.naturalWidth)return;
+  if(!window._mbGeom.boxW) recalcMyBannerGeom();
+  var v=window._mbView, g=window._mbGeom;
+  var s = g.baseScale * v.zoom;
+  // 이미지가 박스 가운데에 오도록 기본 평행이동 + 사용자 offset (offset은 자연 픽셀 → s 곱해서 화면 픽셀)
+  var tx = (g.boxW - g.imgW*s)/2 + v.offsetX*s;
+  var ty = (g.boxH - g.imgH*s)/2 + v.offsetY*s;
+  img.style.transform='translate('+tx+'px,'+ty+'px) scale('+s+')';
 }
 function onMyBannerZoom(val){
   window._mbView.zoom = (parseFloat(val)||100)/100;
@@ -5742,8 +5766,11 @@ function initMyBannerDrag(){
   var onMove=function(e){
     if(!dragging)return;
     var p = e.touches ? e.touches[0] : e;
-    window._mbView.offsetX = baseX + (p.clientX - startX);
-    window._mbView.offsetY = baseY + (p.clientY - startY);
+    var g=window._mbGeom;
+    var s = g.baseScale * window._mbView.zoom || 1;
+    // 화면 드래그 px → 자연 픽셀 단위 offset 으로 환산
+    window._mbView.offsetX = baseX + (p.clientX - startX)/s;
+    window._mbView.offsetY = baseY + (p.clientY - startY)/s;
     applyMyBannerTransform();
   };
   var onUp=function(){ dragging=false; box.style.cursor='grab'; };
@@ -5751,7 +5778,7 @@ function initMyBannerDrag(){
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onUp);
   box.addEventListener('touchstart', onDown, {passive:false});
-  window.addEventListener('touchmove', onMove, {passive:true});
+  window.addEventListener('touchmove', onMove, {passive:false});
   window.addEventListener('touchend', onUp);
 }
 
@@ -5763,6 +5790,7 @@ function previewMyBanner(){
   img.onload=function(){
     pv.style.display='';
     initMyBannerDrag();
+    recalcMyBannerGeom();
     applyMyBannerTransform();
   };
   img.onerror=function(){pv.style.display='none';};
@@ -5773,8 +5801,17 @@ function rMyBannerPreview(){
   if(mb&&mb.img){
     img.src=mb.img;
     pv.style.display='';
-    initMyBannerDrag();
-    applyMyBannerTransform();
+    img.onload=function(){
+      initMyBannerDrag();
+      recalcMyBannerGeom();
+      applyMyBannerTransform();
+    };
+    // 이미 캐시되어 onload가 안 뜰 수도 있음
+    if(img.complete && img.naturalWidth){
+      initMyBannerDrag();
+      recalcMyBannerGeom();
+      applyMyBannerTransform();
+    }
   }
   else if(pv){pv.style.display='none';}
 }
