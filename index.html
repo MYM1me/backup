@@ -1431,7 +1431,10 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <button class="vb" onclick="catSortAsc=!catSortAsc;catPage=0;rCatView()" id="catSortBtn" style="font-size:.7rem;width:80px;padding:0 10px;gap:4px"><span id="catSortLabel"></span> ↕</button>
       <button class="vb admin-only" onclick="toggleBdMode()" id="catBdBtn" style="font-size:.7rem;width:80px;padding:0 10px;display:none">✓ 선택</button>
       <div id="catPagi" class="pagi" style="margin-left:auto"></div>
-      <button class="vb admin-only" onclick="edId=null;edFromCatView();go('editor')" id="catWriteBtn" style="font-size:.7rem;padding:0 12px;gap:4px;display:none">+ 작성</button>
+      <button class="vb admin-only" onclick="edId=null;edFromCatView();go('editor')" id="catWriteBtn" style="width:auto;padding:0 14px;gap:5px;font-size:.72rem;font-weight:500;background:var(--text);color:var(--bg);border-color:var(--text);display:none">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        작성
+      </button>
     </div>
     <div id="catBdBar"></div>
     <div id="catPosts" class="grid g1"></div>
@@ -3087,6 +3090,8 @@ function rCatView(){
   var bdBtn=$('#catBdBtn');
   if(bdBtn)bdBtn.style.display=isAdmin?'':'none';
   if(bdBtn)bdBtn.className='vb'+(bdMode?' on':'');
+  var wrBtn=$('#catWriteBtn');
+  if(wrBtn)wrBtn.style.display=isAdmin?'':'none';
   // batch delete bar
   var barEl=$('#catBdBar');
   if(barEl){
