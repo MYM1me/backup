@@ -346,6 +346,20 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
 .crop-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .crop-btns button{padding:8px 20px;border-radius:7px;font-size:.82rem;cursor:pointer;border:none;font-weight:500;transition:all var(--tr)}
 
+/* 배너 크롭 모달 (5:1) */
+.banner-crop-dim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:960;justify-content:center;align-items:center;padding:20px}
+.banner-crop-dim.on{display:flex}
+.banner-crop-modal{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.banner-crop-modal h3{font-size:.9rem;font-weight:600;margin-bottom:16px}
+.banner-crop-wrap{width:100%;background:#0a0a0a;border-radius:10px;padding:20px;display:flex;justify-content:center;align-items:center}
+.banner-crop-box{width:100%;aspect-ratio:5/1;background:#000;position:relative;overflow:hidden;cursor:grab;touch-action:none;border:1px dashed rgba(255,255,255,.25)}
+.banner-crop-box:active{cursor:grabbing}
+.banner-crop-box img{position:absolute;left:0;top:0;width:auto;height:auto;max-width:none;display:block;user-select:none;-webkit-user-drag:none;transform-origin:0 0}
+.banner-crop-controls{margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.banner-crop-controls input[type=range]{flex:1}
+.banner-crop-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.banner-crop-btns button{padding:8px 20px;border-radius:7px;font-size:.82rem;cursor:pointer;border:none;font-weight:500;transition:all var(--tr)}
+@media(max-width:540px){.banner-crop-modal{padding:16px}.banner-crop-wrap{padding:12px}}
 
 /* ── EDITOR ── */
 .ed-c{background:var(--card);box-shadow:var(--shadow);border-radius:var(--radius);padding:32px;overflow:visible}
@@ -2099,18 +2113,12 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
         <div style="font-size:.75rem;font-weight:600;margin-bottom:10px;color:var(--text);display:flex;align-items:center;gap:6px">
           <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>내 배너 <span style="font-weight:300;font-size:.68rem;color:var(--text-light)">— 항상 맨 위에 고정</span>
         </div>
-        <div id="myBannerPreview" style="display:none;margin-bottom:10px;border:1px solid var(--border)">
-          <div id="myBannerPreviewBox" style="overflow:hidden;aspect-ratio:5/1;cursor:grab;position:relative;background:#000;touch-action:none">
-            <img id="myBannerPreviewImg" style="position:absolute;left:0;top:0;width:auto;height:auto;max-width:none;display:block;user-select:none;-webkit-user-drag:none;transform-origin:0 0" draggable="false">
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--border);background:var(--bg)">
-            <span style="font-size:.68rem;color:var(--text-sub);white-space:nowrap">확대</span>
-            <input type="range" id="mbZoom" min="100" max="400" value="100" step="1" style="flex:1" oninput="onMyBannerZoom(this.value)">
-            <span id="mbZoomVal" style="font-size:.68rem;color:var(--text-light);min-width:34px;text-align:right">100%</span>
-            <button type="button" onclick="resetMyBannerView()" style="padding:4px 8px;font-size:.66rem;border:1px solid var(--border-h);background:var(--bg);color:var(--text-sub);border-radius:4px;cursor:pointer">초기화</button>
-          </div>
-          <div style="font-size:.66rem;color:var(--text-light);padding:0 10px 8px">💡 이미지를 드래그하면 위치를 조정할 수 있어요. 확대는 100%부터 시작해요 (=이미지 전체가 5:1 안에 맞춰 들어간 상태).</div>
-        </div>
+        <div id="myBannerPreview" style="display:none;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative">
+		  <div style="aspect-ratio:5/1;background:#000">
+			<img id="myBannerPreviewImg" style="width:100%;height:100%;object-fit:cover;display:block" draggable="false">
+		  </div>
+		  <button type="button" onclick="reopenBannerCrop()" style="position:absolute;right:8px;bottom:8px;padding:5px 10px;font-size:.66rem;border:none;background:rgba(0,0,0,.6);color:#fff;border-radius:5px;cursor:pointer;backdrop-filter:blur(4px)">다시 조정</button>
+		</div>
         <div class="ef" style="margin-bottom:8px">
           <label style="font-size:.72rem;font-weight:500;margin-bottom:4px;display:block;color:var(--text-sub)">내 배너 이미지 설정</label>
           <input id="mbImg" type="hidden" oninput="previewMyBanner()">
@@ -2248,6 +2256,29 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
     <div class="crop-btns">
       <button class="btn-g" onclick="closeCropModal()">취소</button>
       <button class="btn-p" onclick="applyCrop()">적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 배너 크롭 모달 (5:1) -->
+<div class="banner-crop-dim" id="bannerCropDim" onclick="if(event.target===this)closeBannerCropModal()">
+  <div class="banner-crop-modal">
+    <h3>배너 크롭 / 조정 <span style="font-weight:300;color:var(--text-light);font-size:.72rem;margin-left:6px">5:1 비율로 잘라요</span></h3>
+    <div class="banner-crop-wrap" id="bannerCropWrap">
+      <div class="banner-crop-box" id="bannerCropBox">
+        <img id="bannerCropImg" draggable="false">
+      </div>
+    </div>
+    <div class="banner-crop-controls">
+      <span style="font-size:.7rem;color:var(--text-sub);white-space:nowrap">확대</span>
+      <input type="range" id="bannerCropZoom" min="100" max="400" value="100" step="1" oninput="onBannerCropZoom(this.value)">
+      <span id="bannerCropZoomVal" style="font-size:.7rem;color:var(--text-light);min-width:38px;text-align:right">100%</span>
+      <button type="button" onclick="resetBannerCropView()" style="padding:5px 10px;font-size:.68rem;border:1px solid var(--border-h);background:var(--bg);color:var(--text-sub);border-radius:5px;cursor:pointer">초기화</button>
+    </div>
+    <div style="font-size:.68rem;color:var(--text-light);margin-top:8px">💡 이미지를 드래그해서 위치를 잡고, 슬라이더로 확대해요. "적용"을 누르면 5:1로 크롭돼서 업로드돼요.</div>
+    <div class="banner-crop-btns">
+      <button class="btn-g" onclick="closeBannerCropModal()">취소</button>
+      <button class="btn-p" onclick="applyBannerCrop()">적용</button>
     </div>
   </div>
 </div>
@@ -5634,23 +5665,14 @@ function rHeartGrid(){
     return u.toString();
   })();
 
-  // 내 배너 (맨 위 고정, 클릭 시 링크 복사)
+  // 내 배너 (맨 위 고정, 클릭 시 링크 복사) — 이미 5:1로 크롭된 이미지라 그냥 표시
   if(mb&&mb.img){
     var c=mb.color||'#1A1A1A';
-    var mbZoom = (mb.zoom!=null)?mb.zoom:1;
-    var mbOX = (mb.offsetX!=null)?mb.offsetX:0;
-    var mbOY = (mb.offsetY!=null)?mb.offsetY:0;
-    // 미리보기와 같은 contain 좌표계로 렌더링. onload 시 실제 박스/이미지 크기로 transform 계산.
-    var mbImgStyle = 'position:absolute;left:0;top:0;width:auto;height:auto;max-width:none;display:block;transform-origin:0 0;visibility:hidden';
-    var onloadFn = 'var b=this.parentNode,iw=this.naturalWidth,ih=this.naturalHeight,bw=b.clientWidth,bh=b.clientHeight;'
-      + 'var bs=Math.min(bw/iw,bh/ih),s=bs*'+mbZoom+';'
-      + 'var tx=(bw-iw*s)/2+('+mbOX+')*s,ty=(bh-ih*s)/2+('+mbOY+')*s;'
-      + 'this.style.transform="translate("+tx+"px,"+ty+"px) scale("+s+")";this.style.visibility="visible";';
     var mbAddBtn = isVisitor
-      ? '<button class="heart-add-btn" onclick="event.stopPropagation();addBannerFromVisit('+JSON.stringify({img:mb.img,url:ownerBlogUrl,label:mb.label||'',color:c,zoom:mbZoom,offsetX:mbOX,offsetY:mbOY}).replace(/"/g,'&quot;')+')" title="내 블로그에 추가">+</button>'
+      ? '<button class="heart-add-btn" onclick="event.stopPropagation();addBannerFromVisit('+JSON.stringify({img:mb.img,url:ownerBlogUrl,label:mb.label||'',color:c}).replace(/"/g,'&quot;')+')" title="내 블로그에 추가">+</button>'
       : '';
     html+='<div class="heart-item" onclick="copyMyBannerUrl()" style="cursor:copy">'
-      +'<div class="heart-item-img" style="position:relative;overflow:hidden"><img src="'+mb.img+'" loading="lazy" style="'+mbImgStyle+'" onload="'+onloadFn+'"></div>'
+      +'<div class="heart-item-img"><img src="'+mb.img+'" loading="lazy"></div>'
       +(mb.label?'<div class="heart-tooltip" style="background:'+c+'">'+esc(mb.label)+'<span class="ht-arrow" style="border-top-color:'+c+'"></span></div>':'')
       +mbAddBtn
       +'</div>';
@@ -5703,47 +5725,45 @@ document.addEventListener('click',function(e){
   }
 });
 
-/* Admin: Heart Link 관리 */
+/* ── 내 배너 (크롭 모달 방식) ── */
+
 function saveMyBanner(){
   var img=$('#mbImg').value.trim();
   var label=$('#mbLabel').value.trim();
   var color=$('#mbColor').value||'#1A1A1A';
   if(!img){
-    // 이미지 비우면 내 배너 삭제
     cfg.myBanner=null;
     sv();initHeartPanel();rMyBannerPreview();
     toast('내 배너 삭제됨');
     return;
   }
-  // 클릭 시 이동 URL은 자동으로 현재 블로그 URL 사용 (copyMyBannerUrl이 처리)
-  cfg.myBanner={
-    img:img,
-    label:label,
-    color:color,
-    zoom: window._mbView ? window._mbView.zoom : 1,
-    offsetX: window._mbView ? window._mbView.offsetX : 0,
-    offsetY: window._mbView ? window._mbView.offsetY : 0
-  };
+  cfg.myBanner={img:img, label:label, color:color};
   sv();initHeartPanel();rMyBannerPreview();
   toast('내 배너 저장됨');
 }
 
-// PC에서 파일 선택 시 ImageKit에 업로드 후 URL을 mbImg에 세팅
+// PC에서 파일 선택 시 → 크롭 모달 열기
 function onMyBannerFile(ev){
   var f=ev.target.files&&ev.target.files[0];
   if(!f)return;
-  toast('업로드 중...');
-  uploadToImageKit(f,function(url){
-    $('#mbImg').value=url;
-    previewMyBanner();
-    toast('업로드 완료 — 저장 버튼을 눌러주세요');
-  },{fileName:f.name});
-  ev.target.value=''; // 같은 파일 재선택 가능하도록 초기화
+  var reader=new FileReader();
+  reader.onload=function(e){
+    openBannerCropModal(e.target.result);
+  };
+  reader.readAsDataURL(f);
+  ev.target.value='';
 }
+
+// 미리보기 우하단 "다시 조정" 버튼
+function reopenBannerCrop(){
+  var url=$('#mbImg').value.trim();
+  if(!url){toast('먼저 이미지를 불러와요');return;}
+  openBannerCropModal(url);
+}
+
 function copyMyBannerUrl(){
   var mb=cfg.myBanner;
   if(!mb)return;
-  // 클릭 시 이동 URL은 항상 현재 블로그 URL을 사용
   var url=mb.url||window.location.href.split('#')[0];
   navigator.clipboard.writeText(url).then(function(){
     toast('링크가 복사되었어요!');
@@ -5755,49 +5775,71 @@ function copyMyBannerUrl(){
     toast('링크가 복사되었어요!');
   });
 }
-// 내 배너 뷰 상태
-//   zoom: 1.0 = 이미지 전체가 5:1 박스에 contain된 상태 (기본). >1이면 확대.
-//   offsetX/Y: 이미지 자연 픽셀 단위 평행이동 (가운데 정렬 기준 추가 보정값)
-window._mbView = window._mbView || {zoom:1, offsetX:0, offsetY:0};
-// 미리보기 박스 크기와 이미지 자연 크기를 캐싱
-window._mbGeom = window._mbGeom || {boxW:0, boxH:0, imgW:0, imgH:0, baseScale:1};
 
-function recalcMyBannerGeom(){
-  var box=$('#myBannerPreviewBox'), img=$('#myBannerPreviewImg');
+/* ── 배너 크롭 모달 ── */
+window._bcView = {zoom:1, offsetX:0, offsetY:0};
+window._bcGeom = {boxW:0, boxH:0, imgW:0, imgH:0, baseScale:1};
+
+function openBannerCropModal(src){
+  var dim=$('#bannerCropDim');
+  var img=$('#bannerCropImg');
+  window._bcView = {zoom:1, offsetX:0, offsetY:0};
+  var zs=$('#bannerCropZoom'); if(zs) zs.value=100;
+  var zl=$('#bannerCropZoomVal'); if(zl) zl.textContent='100%';
+  img.onload=function(){
+    dim.classList.add('on');
+    initBannerCropDrag();
+    // 모달이 보이고 나서 박스 크기가 잡히므로 다음 프레임에 계산
+    requestAnimationFrame(function(){
+      recalcBannerCropGeom();
+      applyBannerCropTransform();
+    });
+  };
+  img.onerror=function(){toast('이미지를 불러올 수 없어요');};
+  img.src=src;
+}
+
+function closeBannerCropModal(){
+  $('#bannerCropDim').classList.remove('on');
+}
+
+function recalcBannerCropGeom(){
+  var box=$('#bannerCropBox'), img=$('#bannerCropImg');
   if(!box||!img||!img.naturalWidth)return false;
-  var g=window._mbGeom;
-  g.boxW = box.clientWidth;
-  g.boxH = box.clientHeight;
-  g.imgW = img.naturalWidth;
-  g.imgH = img.naturalHeight;
-  // contain 기준 기본 배율 (이미지 전체가 박스 안에 맞춰 들어오는 배율)
-  g.baseScale = Math.min(g.boxW/g.imgW, g.boxH/g.imgH);
+  var g=window._bcGeom;
+  g.boxW=box.clientWidth; g.boxH=box.clientHeight;
+  g.imgW=img.naturalWidth; g.imgH=img.naturalHeight;
+  // cover 기준: 박스를 꽉 채우는 최소 배율 (잘리더라도 빈 공간 없도록)
+  g.baseScale = Math.max(g.boxW/g.imgW, g.boxH/g.imgH);
   return true;
 }
-function applyMyBannerTransform(){
-  var img=$('#myBannerPreviewImg');
+
+function applyBannerCropTransform(){
+  var img=$('#bannerCropImg');
   if(!img||!img.naturalWidth)return;
-  if(!window._mbGeom.boxW) recalcMyBannerGeom();
-  var v=window._mbView, g=window._mbGeom;
+  if(!window._bcGeom.boxW) recalcBannerCropGeom();
+  var v=window._bcView, g=window._bcGeom;
   var s = g.baseScale * v.zoom;
-  // 이미지가 박스 가운데에 오도록 기본 평행이동 + 사용자 offset (offset은 자연 픽셀 → s 곱해서 화면 픽셀)
   var tx = (g.boxW - g.imgW*s)/2 + v.offsetX*s;
   var ty = (g.boxH - g.imgH*s)/2 + v.offsetY*s;
   img.style.transform='translate('+tx+'px,'+ty+'px) scale('+s+')';
 }
-function onMyBannerZoom(val){
-  window._mbView.zoom = (parseFloat(val)||100)/100;
-  var lbl=$('#mbZoomVal'); if(lbl) lbl.textContent = Math.round(window._mbView.zoom*100)+'%';
-  applyMyBannerTransform();
+
+function onBannerCropZoom(val){
+  window._bcView.zoom = (parseFloat(val)||100)/100;
+  var lbl=$('#bannerCropZoomVal'); if(lbl) lbl.textContent = Math.round(window._bcView.zoom*100)+'%';
+  applyBannerCropTransform();
 }
-function resetMyBannerView(){
-  window._mbView = {zoom:1, offsetX:0, offsetY:0};
-  var s=$('#mbZoom'); if(s) s.value=100;
-  var lbl=$('#mbZoomVal'); if(lbl) lbl.textContent='100%';
-  applyMyBannerTransform();
+
+function resetBannerCropView(){
+  window._bcView = {zoom:1, offsetX:0, offsetY:0};
+  var s=$('#bannerCropZoom'); if(s) s.value=100;
+  var lbl=$('#bannerCropZoomVal'); if(lbl) lbl.textContent='100%';
+  applyBannerCropTransform();
 }
-function initMyBannerDrag(){
-  var box=$('#myBannerPreviewBox');
+
+function initBannerCropDrag(){
+  var box=$('#bannerCropBox');
   if(!box || box._dragBound) return;
   box._dragBound=true;
   var dragging=false, startX=0, startY=0, baseX=0, baseY=0;
@@ -5805,21 +5847,19 @@ function initMyBannerDrag(){
     dragging=true;
     var p = e.touches ? e.touches[0] : e;
     startX=p.clientX; startY=p.clientY;
-    baseX=window._mbView.offsetX; baseY=window._mbView.offsetY;
-    box.style.cursor='grabbing';
+    baseX=window._bcView.offsetX; baseY=window._bcView.offsetY;
     e.preventDefault();
   };
   var onMove=function(e){
     if(!dragging)return;
     var p = e.touches ? e.touches[0] : e;
-    var g=window._mbGeom;
-    var s = g.baseScale * window._mbView.zoom || 1;
-    // 화면 드래그 px → 자연 픽셀 단위 offset 으로 환산
-    window._mbView.offsetX = baseX + (p.clientX - startX)/s;
-    window._mbView.offsetY = baseY + (p.clientY - startY)/s;
-    applyMyBannerTransform();
+    var g=window._bcGeom;
+    var s = g.baseScale * window._bcView.zoom || 1;
+    window._bcView.offsetX = baseX + (p.clientX - startX)/s;
+    window._bcView.offsetY = baseY + (p.clientY - startY)/s;
+    applyBannerCropTransform();
   };
-  var onUp=function(){ dragging=false; box.style.cursor='grab'; };
+  var onUp=function(){ dragging=false; };
   box.addEventListener('mousedown', onDown);
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onUp);
@@ -5828,18 +5868,48 @@ function initMyBannerDrag(){
   window.addEventListener('touchend', onUp);
 }
 
+// 적용: canvas로 5:1 잘라서 Blob → ImageKit 업로드 → mbImg에 URL
+function applyBannerCrop(){
+  var img=$('#bannerCropImg');
+  if(!img||!img.naturalWidth){toast('이미지가 준비되지 않았어요');return;}
+  var v=window._bcView, g=window._bcGeom;
+  if(!g.boxW) recalcBannerCropGeom();
+
+  // 출력 캔버스 크기: 가로 1500px 기준 (5:1 → 1500x300). 충분히 선명, 용량도 적당.
+  var outW=1500, outH=300;
+  var canvas=document.createElement('canvas');
+  canvas.width=outW; canvas.height=outH;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,outW,outH);
+
+  // 박스 좌표계에서 이미지가 그려지는 위치를 출력 캔버스 비율로 환산
+  var s = g.baseScale * v.zoom;
+  var tx = (g.boxW - g.imgW*s)/2 + v.offsetX*s;
+  var ty = (g.boxH - g.imgH*s)/2 + v.offsetY*s;
+  // 박스→캔버스 스케일 (가로 기준)
+  var k = outW / g.boxW;
+  ctx.drawImage(img, tx*k, ty*k, g.imgW*s*k, g.imgH*s*k);
+
+  closeBannerCropModal();
+  toast('크롭본 업로드 중...');
+  canvas.toBlob(function(blob){
+    if(!blob){toast('크롭 실패');return;}
+    uploadToImageKit(blob, function(url){
+      $('#mbImg').value=url;
+      previewMyBanner();
+      toast('업로드 완료 — 저장 버튼을 눌러주세요');
+    }, {fileName:'banner_'+Date.now()+'.jpg'});
+  }, 'image/jpeg', 0.92);
+}
+
+// 미리보기 (단순)
 function previewMyBanner(){
   var url=$('#mbImg').value.trim();
   var pv=$('#myBannerPreview'),img=$('#myBannerPreviewImg');
   if(!url){pv.style.display='none';return;}
   img.src=url;
-  img.onload=function(){
-    pv.style.display='';
-    initMyBannerDrag();
-    recalcMyBannerGeom();
-    applyMyBannerTransform();
-  };
-  img.onerror=function(){pv.style.display='none';};
+  pv.style.display='';
 }
 function rMyBannerPreview(){
   var mb=cfg.myBanner;
@@ -5847,33 +5917,15 @@ function rMyBannerPreview(){
   if(mb&&mb.img){
     img.src=mb.img;
     pv.style.display='';
-    img.onload=function(){
-      initMyBannerDrag();
-      recalcMyBannerGeom();
-      applyMyBannerTransform();
-    };
-    // 이미 캐시되어 onload가 안 뜰 수도 있음
-    if(img.complete && img.naturalWidth){
-      initMyBannerDrag();
-      recalcMyBannerGeom();
-      applyMyBannerTransform();
-    }
+  } else if(pv){
+    pv.style.display='none';
   }
-  else if(pv){pv.style.display='none';}
 }
 function loadMyBannerFields(){
   var mb=cfg.myBanner||{};
   if($('#mbImg'))$('#mbImg').value=mb.img||'';
   if($('#mbLabel'))$('#mbLabel').value=mb.label||'';
   if($('#mbColor'))$('#mbColor').value=mb.color||'#1A1A1A';
-  // 저장된 zoom/offset 복원
-  window._mbView = {
-    zoom: (mb.zoom!=null) ? mb.zoom : 1,
-    offsetX: (mb.offsetX!=null) ? mb.offsetX : 0,
-    offsetY: (mb.offsetY!=null) ? mb.offsetY : 0
-  };
-  var s=$('#mbZoom'); if(s) s.value = Math.round(window._mbView.zoom*100);
-  var lbl=$('#mbZoomVal'); if(lbl) lbl.textContent = Math.round(window._mbView.zoom*100)+'%';
   rMyBannerPreview();
 }
 
