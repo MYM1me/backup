@@ -1302,7 +1302,7 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
     </div>
     <div class="ef">
       <label>자체 코드</label>
-      <input type="text" id="loginCodeInput" placeholder="A3X9P2K7" autocapitalize="characters" autocomplete="off" style="letter-spacing:.1em;font-family:'IBM Plex Mono',monospace" maxlength="8">
+      <input type="text" id="loginCodeInput" placeholder="" autocapitalize="characters" autocomplete="off" style="letter-spacing:.1em;font-family:'IBM Plex Mono',monospace" maxlength="8">
     </div>
     <div class="ef">
       <label>비밀번호</label>
@@ -2090,11 +2090,9 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
         </div>
         <div class="ef" style="margin-bottom:8px">
           <label style="font-size:.72rem;font-weight:500;margin-bottom:4px;display:block;color:var(--text-sub)">내 배너 이미지 설정</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input id="mbImg" placeholder="이미지 URL 또는 아래 버튼으로 업로드" style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;flex:1" oninput="previewMyBanner()">
-            <input type="file" id="mbImgFile" accept="image/*" style="display:none" onchange="onMyBannerFile(event)">
-            <button type="button" onclick="document.getElementById('mbImgFile').click()" style="padding:8px 14px;font-size:.74rem;border:1px solid var(--border-h);background:var(--bg);color:var(--text);border-radius:6px;cursor:pointer;white-space:nowrap;height:36px">PC에서 불러오기</button>
-          </div>
+          <input id="mbImg" type="hidden" oninput="previewMyBanner()">
+          <input type="file" id="mbImgFile" accept="image/*" style="display:none" onchange="onMyBannerFile(event)">
+          <button type="button" onclick="document.getElementById('mbImgFile').click()" style="width:100%;padding:8px 14px;font-size:.74rem;border:1px solid var(--border-h);background:var(--bg);color:var(--text);border-radius:6px;cursor:pointer;height:36px">PC에서 불러오기</button>
         </div>
         <div style="display:flex;gap:8px;align-items:flex-end">
           <div class="ef" style="flex:1;margin-bottom:0">
@@ -5677,11 +5675,6 @@ function saveMyBanner(){
     offsetX: window._mbView ? window._mbView.offsetX : 0,
     offsetY: window._mbView ? window._mbView.offsetY : 0
   };
-  sv();initHeartPanel();rMyBannerPreview();
-  toast('내 배너 저장됨');
-}
-  // 클릭 시 이동 URL은 자동으로 현재 블로그 URL 사용 (copyMyBannerUrl이 처리)
-  cfg.myBanner={img:img,label:label,color:color};
   sv();initHeartPanel();rMyBannerPreview();
   toast('내 배너 저장됨');
 }
