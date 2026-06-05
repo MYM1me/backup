@@ -1162,6 +1162,7 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
         window._fbHasData = true;
         const data = snap.data();
         if (data.cfg) window._fbCfg = data.cfg;
+        if (data.cats) window._fbCats = data.cats;
         if (data.ps) window._fbPs = data.ps;
         if (data.pairs) window._fbPairs = data.pairs;
         if (data.prompts) window._fbPrompts = data.prompts;
@@ -1429,7 +1430,8 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
     <div style="display:flex;align-items:center;gap:6px;margin-top:24px;margin-bottom:12px">
       <button class="vb" onclick="catSortAsc=!catSortAsc;catPage=0;rCatView()" id="catSortBtn" style="font-size:.7rem;width:80px;padding:0 10px;gap:4px"><span id="catSortLabel"></span> ↕</button>
       <button class="vb admin-only" onclick="toggleBdMode()" id="catBdBtn" style="font-size:.7rem;width:80px;padding:0 10px;display:none">✓ 선택</button>
-      <div style="margin-left:auto" id="catPagi" class="pagi"></div>
+      <div id="catPagi" class="pagi" style="margin-left:auto"></div>
+      <button class="vb admin-only" onclick="edId=null;edFromCatView();go('editor')" id="catWriteBtn" style="font-size:.7rem;padding:0 12px;gap:4px;display:none">+ 작성</button>
     </div>
     <div id="catBdBar"></div>
     <div id="catPosts" class="grid g1"></div>
@@ -2343,6 +2345,7 @@ function sv(){
   }
   try{
     localStorage.setItem(lsKey('e_cfg'),JSON.stringify(cfg));
+    localStorage.setItem(lsKey('e_cats'),JSON.stringify(cats));
     localStorage.setItem(lsKey('e_ps'),JSON.stringify(ps));
     localStorage.setItem(lsKey('e_pairs'),JSON.stringify(pairs));
     localStorage.setItem(lsKey('e_prompts'),JSON.stringify(prompts));
@@ -2358,7 +2361,7 @@ function sv(){
     var db=window._db, docFn=window._firestoreFns.doc, setDocFn=window._firestoreFns.setDoc;
     // 메인 데이터 → blogs/{uid}/main/data
     setDocFn(docFn(db,'blogs',uid,'main','data'),{
-      cfg:cfg,ps:ps,pairs:pairs,updatedAt:Date.now()
+      cfg:cfg,cats:cats,ps:ps,pairs:pairs,updatedAt:Date.now()
     }).then(function(){console.log('Firebase 메인 저장 완료')}).catch(function(e){console.warn('Firebase 메인 저장 실패:',e);showAlert('⚠️','저장에 실패했어요.<br><span style="font-size:.78rem;color:var(--text-sub)">데이터가 너무 커요. 이미지 수를 줄여보세요.</span>');});
     // 프롬프트 별도 저장 → blogs/{uid}/main/prompts
     setDocFn(docFn(db,'blogs',uid,'main','prompts'),{
@@ -7914,19 +7917,19 @@ function startApp(){
   // 없었으면 무조건 빈 기본값 (localStorage 캐시도 무시 — 다른 유저 데이터 오염 방지)
   if(window._fbHasData){
     cfg = window._fbCfg || ld('e_cfg') || defCfg;
+    cats = window._fbCats || ld('e_cats') || [];
     ps = window._fbPs || ld('e_ps') || [];
     pairs = window._fbPairs || ld('e_pairs') || [];
     prompts = window._fbPrompts || ld('e_prompts') || [];
     memos = window._fbMemos || ld('e_memos') || [];
   } else {
     cfg = window._fbCfg || defCfg;
+    cats = window._fbCats || [];
     ps = window._fbPs || [];
     pairs = window._fbPairs || [];
     prompts = window._fbPrompts || [];
     memos = window._fbMemos || [];
   }
-  // 시리즈는 폐기 - 항상 빈 배열
-  cats = [];
 
   // memoTags 보강
   if(!cfg.memoTags||Array.isArray(cfg.memoTags)){var ot=Array.isArray(cfg.memoTags)?cfg.memoTags:[];cfg.memoTags={OOC:ot,'지침':[],'작태':[]};}
