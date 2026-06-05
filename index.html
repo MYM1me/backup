@@ -1247,6 +1247,7 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
   <div class="n-logo" onclick="go('home')" id="nL">Blog</div>
   <button class="n-mob" onclick="document.querySelector('.n-links').classList.toggle('open')">☰</button>
   <div class="n-links">
+    <button class="n-link" data-p="series" onclick="go('series')" id="seriesTab">시리즈</button>
     <button class="n-link" data-p="pair" onclick="go('pair')" id="pairTab">페어</button>
     <button class="n-link" data-p="prompt" onclick="go('prompt')" id="promptTab">페르소나</button>
     <span id="customTabLinks"></span>
@@ -1397,6 +1398,19 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <button class="btn-g" onclick="closeChangePwModal()">취소</button>
       <button class="btn-p" onclick="submitChangePw()">변경</button>
     </div>
+  </div>
+</div>
+
+<!-- SERIES -->
+<div class="page" id="pg-series">
+  <div class="pw">
+    <div class="series-head">
+      <span style="font-size:.82rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase">Series</span>
+      <button class="n-wr admin-only" id="seriesAddBtn" onclick="openCatModal()" style="display:none">+ 시리즈 추가</button>
+    </div>
+    <div id="seriesGrid" class="grid g3 series-grid" style="min-height:0"></div>
+    <div style="display:flex;justify-content:center;margin-top:20px" id="seriesPagi" class="pagi"></div>
+    <div class="empty" id="seriesE" style="display:none"><div>◻</div><h3>아직 시리즈가 없어요</h3><p id="seriesEMsg">관리 페이지에서 시리즈를 만들어보세요</p></div>
   </div>
 </div>
 
@@ -2018,6 +2032,10 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <div class="ab-body">
         <div style="display:flex;flex-direction:column;gap:10px">
           <label style="font-size:.85rem;display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="cHideSeries" onchange="cfg.hideSeries=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin()">
+            <span>시리즈 탭 숨기기 <span style="color:var(--text-light);font-size:.78rem">(다른 사람에게는 시리즈 탭이 안 보여요)</span></span>
+          </label>
+          <label style="font-size:.85rem;display:flex;align-items:center;gap:10px;cursor:pointer">
             <input type="checkbox" id="cHidePair" onchange="cfg.hidePair=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin()">
             <span>페어 탭 숨기기 <span style="color:var(--text-light);font-size:.78rem">(다른 사람에게는 페어 탭이 안 보여요)</span></span>
           </label>
@@ -2364,8 +2382,6 @@ function applyAcc(){
 applyAcc();
 
 function go(p){
-  // 시리즈 페이지는 폐기 - 홈으로 리다이렉트
-  if(p==='series'){p='home';}
   if(!isAdmin && (p==='admin'||p==='editor'||p==='memo')){
     toast('블로그 주인만 사용할 수 있어요');return;
   }
@@ -2382,6 +2398,7 @@ function go(p){
   var nl=$('.n-links');if(nl)nl.classList.remove('open');
   window.scrollTo({top:0,behavior:'smooth'});
   if(p==='home')rHome();
+  if(p==='series')rSeries();
   if(p==='admin'){rAdmin();}
   if(p==='memo'){rMemo();}
   if(p==='editor')initEd();
@@ -2634,6 +2651,7 @@ function mkM(a){if(a.length<2)return mkG(a);return '<div class="mag"><div class=
 // 홈에 표시 가능한 카테고리 목록 반환
 function getHomeAvailable(){
   var list=[];
+  if(!cfg.hideSeries)list.push({key:'series',label:'SERIES',target:'series'});
   if(!cfg.hidePair)list.push({key:'pair',label:'PAIR',target:'pair'});
   if(!cfg.hidePrompt)list.push({key:'persona',label:'PERSONA',target:'prompt'});
   (cfg.customTabs||[]).forEach(function(t){
@@ -2646,6 +2664,11 @@ function getHomeAvailable(){
 // 각 카테고리별 최신 N개 가져오기
 function getHomeSecItems(key,limit){
   limit=limit||4;
+  if(key==='series'){
+    var list=(ps||[]).filter(function(p){return isAdmin||!p.priv||p.priv===''||p.priv==='pw';});
+    list.sort(function(a,b){return(b.ts||a.d||0)-(a.ts||b.d||0)});
+    return list.slice(0,limit);
+  }
   if(key==='pair'){
     var list=(pairs||[]).filter(function(p){return isAdmin||!p.private});
     list.sort(function(a,b){return(b.ts||0)-(a.ts||0)});
@@ -2670,6 +2693,9 @@ function getHomeSecItems(key,limit){
 
 // 카테고리별 카드 렌더링
 function renderHomeSecCard(key,item){
+  if(key==='series'){
+    return pcC(item,200);
+  }
   if(key==='pair'){
     var dday=calcDday(item.date);
     var img='';
@@ -2760,7 +2786,8 @@ function renderHomeSecCard(key,item){
 
 // 화살표 클릭 시 이동할 페이지
 function gotoHomeSec(key){
-  if(key==='pair')go('pair');
+  if(key==='series')go('series');
+  else if(key==='pair')go('pair');
   else if(key==='persona')go('prompt');
   else if(key.indexOf('ct_')===0)go('ct_'+key);
 }
@@ -3700,6 +3727,7 @@ function rAdmin(){
   $('#cN').value=cfg.name;$('#cD').value=cfg.desc;$('#cHT').value=cfg.ht;$('#cHD').value=cfg.hd;
   if($('#cBgmAuto'))$('#cBgmAuto').checked=!!cfg.bgmAuto;
   if($('#cBgmLoop'))$('#cBgmLoop').checked=!!cfg.bgmLoop;
+  if($('#cHideSeries'))$('#cHideSeries').checked=!!cfg.hideSeries;
   if($('#cHidePair'))$('#cHidePair').checked=!!cfg.hidePair;
   if($('#cHidePrompt'))$('#cHidePrompt').checked=!!cfg.hidePrompt;
   // 계정 정보 표시
@@ -3725,12 +3753,22 @@ function rAdmin(){
   rHomeSecAdmin();
 }
 
-// 기본 카테고리(페어/페르소나) 탭 표시 토글
+// 기본 카테고리(시리즈/페어/페르소나) 탭 표시 토글
 function updateBaseTabsVisibility(){
+  var seriesTab=$('#seriesTab');
   var pairTab=$('#pairTab');
   var promptTab=$('#promptTab');
   // owner: 항상 보임 (숨김 표시만)
-  // guest: cfg.hidePair=true면 숨김
+  // guest: cfg.hideXxx=true면 숨김
+  if(seriesTab){
+    if(isAdmin){
+      seriesTab.style.display='';
+      seriesTab.style.opacity=cfg.hideSeries?'.5':'';
+      seriesTab.title=cfg.hideSeries?'다른 사람에게는 숨김 처리됨':'';
+    }else{
+      seriesTab.style.display=cfg.hideSeries?'none':'';
+    }
+  }
   if(pairTab){
     if(isAdmin){
       pairTab.style.display='';
