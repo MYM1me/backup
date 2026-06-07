@@ -7611,7 +7611,7 @@ function openCtDetail(tabId,itemId){
 
   // 제목, 날짜
   $('#ctDetailTitle').textContent=item.title||'';
-  $('#ctDetailDate').textContent=item.ts?fDateOnly(item.ts):'';
+  $('#ctDetailDate').textContent=item.ts?fDT(item.ts):'';
 
   // 서브탭 뱃지 (메모형에서 서브탭이 있을 때)
   var subEl=$('#ctDetailSub');
@@ -7797,7 +7797,6 @@ function saveCtItem(){
       item.imgs=ctEdImgs.slice();
       item.nsfw=isNsfw;
       if(tab&&tab.useTag)item.tags=ctEdSelTags.slice();
-      item.ts=Date.now();
     }
   }else{
     var newItem={
