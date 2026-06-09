@@ -4260,61 +4260,55 @@ function rdF(f,cb,opts){
 }
 /* ── ImageKit 업로드 ── */
 // file: File 객체 또는 base64 dataURL
-// cb(url) - 성공 시 URL, 실패 시 base64 그대로 폴백
+// cb(url) - 성공 시 URL만 호출됨. 실패 시 cb 호출 안 됨 (base64 폴백 제거)
+// 내부적으로 3번까지 재시도 (1초, 2초, 4초 백오프)
 function uploadToImageKit(fileOrDataUrl, cb, opts){
   opts=opts||{};
-  // 파일명 생성 (중복 방지용 timestamp)
   var fileName=opts.fileName||('img_'+Date.now()+'_'+Math.random().toString(36).substr(2,6));
   var folder=opts.folder||'/blog';
+  var maxAttempts=3;
 
-  var fd=new FormData();
-  // File 객체든 base64 문자열이든 모두 지원
-  if(fileOrDataUrl instanceof File || fileOrDataUrl instanceof Blob){
+  function attempt(n){
+    var fd=new FormData();
+    // File/Blob이든 base64 문자열이든 모두 지원
     fd.append('file',fileOrDataUrl);
-  } else {
-    // base64 그대로 전송 (ImageKit이 base64 허용)
-    fd.append('file',fileOrDataUrl);
-  }
-  fd.append('fileName',fileName);
-  fd.append('folder',folder);
-  fd.append('useUniqueFileName','true');
+    fd.append('fileName',fileName);
+    fd.append('folder',folder);
+    fd.append('useUniqueFileName','true');
 
-  // Basic Auth: base64(privateKey + ':')
-  var auth='Basic '+btoa(IK_PRIVATE_KEY+':');
+    var auth='Basic '+btoa(IK_PRIVATE_KEY+':');
 
-  fetch(IK_UPLOAD_URL,{
-    method:'POST',
-    headers:{'Authorization':auth},
-    body:fd
-  })
-  .then(function(r){return r.json()})
-  .then(function(d){
-    if(d && d.url){
-      cb(d.url);
-    } else {
-      console.warn('ImageKit 업로드 실패:',d);
-      toast('업로드 실패 — 로컬 저장');
-      // 폴백: 원본 반환
-      if(fileOrDataUrl instanceof File || fileOrDataUrl instanceof Blob){
-        var r=new FileReader();
-        r.onload=function(e){cb(e.target.result)};
-        r.readAsDataURL(fileOrDataUrl);
+    fetch(IK_UPLOAD_URL,{
+      method:'POST',
+      headers:{'Authorization':auth},
+      body:fd
+    })
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d && d.url){
+        cb(d.url);
       } else {
-        cb(fileOrDataUrl);
+        console.warn('ImageKit 업로드 실패 (시도 '+n+'/'+maxAttempts+'):',d);
+        retryOrFail(n);
       }
-    }
-  })
-  .catch(function(e){
-    console.warn('ImageKit 에러:',e);
-    toast('업로드 실패 — 로컬 저장');
-    if(fileOrDataUrl instanceof File || fileOrDataUrl instanceof Blob){
-      var r=new FileReader();
-      r.onload=function(e){cb(e.target.result)};
-      r.readAsDataURL(fileOrDataUrl);
+    })
+    .catch(function(e){
+      console.warn('ImageKit 에러 (시도 '+n+'/'+maxAttempts+'):',e);
+      retryOrFail(n);
+    });
+  }
+
+  function retryOrFail(n){
+    if(n<maxAttempts){
+      var delay=Math.pow(2,n-1)*1000; // 1s, 2s, 4s
+      setTimeout(function(){attempt(n+1)},delay);
     } else {
-      cb(fileOrDataUrl);
+      // 최종 실패 — base64 폴백 절대 안 함
+      toast('이미지 업로드에 실패했어요. 다시 시도해주세요.');
     }
-  });
+  }
+
+  attempt(1);
 }
 
 /* ── 기존 uploadToHost 호환 래퍼 (점진적 마이그레이션) ── */
