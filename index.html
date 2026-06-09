@@ -832,6 +832,29 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
 @media(max-width:1100px){.memo-grid{grid-template-columns:repeat(4,1fr);min-height:calc(200px * 4 + 14px * 3)}}
 @media(max-width:860px){.memo-grid{grid-template-columns:repeat(3,1fr);min-height:calc(200px * 5 + 14px * 4)}}
 @media(max-width:640px){.memo-grid{grid-template-columns:repeat(2,1fr);min-height:calc(200px * 8 + 14px * 7)}}
+/* 앨범형 */
+.album-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:min-content;gap:12px}
+@media(max-width:900px){.album-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.album-grid{grid-template-columns:repeat(2,1fr)}}
+.album-card{position:relative;aspect-ratio:1;border-radius:var(--radius);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);background:var(--bg2);transition:all .3s cubic-bezier(.4,0,.2,1)}
+.album-card:hover{box-shadow:var(--shadow-h);transform:translateY(-2px)}
+.album-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.album-card:hover img{transform:scale(1.04)}
+.album-card-count{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:500;padding:3px 7px;border-radius:10px;display:flex;align-items:center;gap:3px;z-index:2}
+.album-card-menu-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.5);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;opacity:0;transition:opacity .2s;z-index:3;line-height:1;font-weight:700}
+.album-card:hover .album-card-menu-btn{opacity:1}
+.album-card-menu-btn:hover{background:rgba(0,0,0,.75)}
+.album-card-drop{display:none;position:absolute;top:36px;right:6px;background:var(--card);border:1px solid var(--border-h);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);overflow:hidden;min-width:90px;z-index:10}
+.album-card-drop.on{display:block}
+.album-card-drop button{display:block;width:100%;padding:8px 14px;border:none;background:none;text-align:left;font-size:.78rem;color:var(--text);cursor:pointer;font-family:inherit}
+.album-card-drop button:hover{background:var(--accent-soft)}
+.album-card-drop button.danger{color:#D4564A}
+/* 앨범형 라이트박스 화살표 */
+#imgLightbox .lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;z-index:1000;transition:background .2s}
+#imgLightbox .lb-arrow:hover{background:rgba(255,255,255,.3)}
+#imgLightbox .lb-arrow.left{left:24px}
+#imgLightbox .lb-arrow.right{right:24px}
+#imgLightbox .lb-counter{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:.85rem;background:rgba(0,0,0,.4);padding:6px 14px;border-radius:20px;z-index:1000}
 .memo-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;height:200px;overflow:hidden}
 .memo-card:hover{border-color:var(--border-h);box-shadow:0 4px 16px rgba(0,0,0,.06);transform:translateY(-1px)}
 .memo-card-title{font-size:.84rem;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -1892,6 +1915,8 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <label>이미지 <span style="font-weight:300;color:var(--text-light);font-size:.68rem">(선택)</span></label>
       <div class="uz" onclick="document.getElementById('ctEdImgIn').click()">클릭하여 업로드</div>
       <input type="file" id="ctEdImgIn" accept="image/*" onchange="onCtEdImg(event)" style="display:none">
+      <input type="file" id="ctEdImgInMulti" accept="image/*" multiple onchange="onCtEdImg(event)" style="display:none">
+      <div style="font-size:.68rem;color:var(--text-light);margin-top:6px">썸네일을 드래그하면 표시 위치를 조정할 수 있어요</div>
       <div class="ths" id="ctEdImgPv"></div>
     </div>
     <div class="ef"><label>내용</label><textarea id="ctEdBody" rows="6" placeholder="내용을 입력하세요" style="min-height:150px"></textarea></div>
@@ -1951,6 +1976,7 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <div class="lo" id="ctmLayoutSel">
         <div class="lo-o on" data-lay="card" onclick="selectCtLayout('card')"><div>▦</div>카드형</div>
         <div class="lo-o" data-lay="list" onclick="selectCtLayout('list')"><div>☰</div>메모형</div>
+        <div class="lo-o" data-lay="album" onclick="selectCtLayout('album')"><div>▩</div>앨범형</div>
       </div>
     </div>
     <div class="ef">
@@ -2786,6 +2812,20 @@ function renderHomeSecCard(key,item){
     var isNsfw=!!item.nsfw;
     var isNsfwBlur=isNsfw&&!isAdmin; // 홈에선 항상 검열 (19 토글은 각 탭 안에서만)
 
+    if(layout==='album'){
+      // 앨범형 카드 (홈)
+      var aImg=(item.imgs&&item.imgs[0])||'';
+      var aPos=(item.imgPos&&item.imgPos[aImg])||'50% 50%';
+      var aStyle=' style="object-position:'+aPos+';'+(isNsfwBlur?'filter:blur(8px);transform:scale(1.1);':'')+'"';
+      var aBadge=isNsfw?'<div class="pmt-card-nsfw">NSFW</div>':'';
+      var aCount=(item.imgs&&item.imgs.length>1)?'<div class="album-card-count">▥ '+item.imgs.length+'</div>':'';
+      return '<div class="album-card" onclick="openAlbumItem(\''+key+'\',\''+item.id+'\')">'+
+        aBadge+
+        (aImg?'<img src="'+aImg+'" loading="lazy"'+aStyle+'>':
+          '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:1.5rem;opacity:.12">✦</div>')+
+        aCount+
+        '</div>';
+    }
     if(layout!=='card'){
       // 메모형 카드
       var memoTitle=isNsfwBlur?'NSFW 메모':esc(item.title||'(제목 없음)');
@@ -2992,9 +3032,9 @@ function rTabOrderAdmin(){
       label=t.name||'(이름 없음)';
       isPriv=!!t.private;
     }
-    var dim=hidden?'opacity:.45;':'';
-    var hideTag=hidden?'<span style="font-size:.68rem;color:var(--text-light)">숨김</span>':'';
-    var privTag=isPriv?'<span style="font-size:.68rem;color:var(--text-light)">🔒</span>':'';
+    var dim=(hidden||isPriv)?'opacity:.45;':'';
+    var hideTag=hidden?'<span style="font-size:.68rem;color:var(--text-light)">숨김</span>':(isPriv?'<span style="font-size:.68rem;color:var(--text-light)">비공개</span>':'');
+    var privTag='';
     var isFirst=idx===0,isLast=idx===cfg.tabOrder.length-1;
     return '<div class="tab-order-row" draggable="true" data-key="'+k+'" data-idx="'+idx+'" '
       +'style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:8px;cursor:grab;user-select:none;'+dim+'">'
@@ -6297,13 +6337,45 @@ function applyPairLock(){
 }
 
 /* ── Image Lightbox ── */
+var lbImgs=[], lbIdx=0;
 function openLightbox(src){
+  lbImgs=[src]; lbIdx=0;
   $('#lightboxImg').src=src;
+  $('#lbArrowL').style.display='none';
+  $('#lbArrowR').style.display='none';
+  $('#lbCounter').style.display='none';
   $('#imgLightbox').classList.add('on');
+}
+function openLightboxMulti(imgs,idx){
+  lbImgs=(imgs||[]).slice(); lbIdx=idx||0;
+  if(!lbImgs.length)return;
+  $('#lightboxImg').src=lbImgs[lbIdx];
+  var multi=lbImgs.length>1;
+  $('#lbArrowL').style.display=multi?'':'none';
+  $('#lbArrowR').style.display=multi?'':'none';
+  $('#lbCounter').style.display=multi?'':'none';
+  if(multi)$('#lbCounter').textContent=(lbIdx+1)+' / '+lbImgs.length;
+  $('#imgLightbox').classList.add('on');
+}
+function lbSlide(dir){
+  if(lbImgs.length<=1)return;
+  lbIdx+=dir;
+  if(lbIdx<0)lbIdx=lbImgs.length-1;
+  if(lbIdx>=lbImgs.length)lbIdx=0;
+  $('#lightboxImg').src=lbImgs[lbIdx];
+  $('#lbCounter').textContent=(lbIdx+1)+' / '+lbImgs.length;
 }
 function closeLightbox(){
   $('#imgLightbox').classList.remove('on');
+  lbImgs=[]; lbIdx=0;
 }
+// 키보드 화살표
+document.addEventListener('keydown',function(e){
+  if(!$('#imgLightbox').classList.contains('on'))return;
+  if(e.key==='ArrowLeft')lbSlide(-1);
+  else if(e.key==='ArrowRight')lbSlide(1);
+  else if(e.key==='Escape')closeLightbox();
+});
 
 /* ── Prompt System ── */
 var curPromptTab='persona',pmtNsfwState=0,pmtEditId=null,pmtViewId=null;
@@ -7467,8 +7539,8 @@ function rCustomTabNav(){
     if(k.indexOf('ct_')===0){
       var t=ctTabs.find(function(x){return 'ct_'+x.id===k;});
       if(!t)return '';
-      var lockIcon=t.private?' <span style="font-size:.7em;opacity:.6">🔒</span>':'';
-      return '<button class="n-link" data-p="ct_'+t.id+'" onclick="go(\'ct_'+t.id+'\')">'+esc(t.name)+lockIcon+'</button>';
+      var dimStyle=t.private?' style="opacity:.5"':'';
+      return '<button class="n-link" data-p="ct_'+t.id+'" onclick="go(\'ct_'+t.id+'\')"'+dimStyle+'>'+esc(t.name)+'</button>';
     }
     return '';
   }).join('');
@@ -7486,7 +7558,7 @@ function ensureCtPages(){
     var pg=document.createElement('div');
     pg.className='page';
     pg.id='pg-ct_'+t.id;
-    var lockBadge=t.private?'<span style="font-size:.65rem;background:var(--accent-soft);padding:3px 7px;border-radius:6px;color:var(--text-sub)">🔒 비공개</span>':'';
+    var lockBadge='';
     var shareBtn=(isAdmin&&!t.private)?'<button class="prompt-nsfw" onclick="copyShareLink({cat:\''+t.id+'\'})" title="이 카테고리 공유 링크 복사">공유</button>':'';
     pg.innerHTML='<div class="pw">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px">'+
@@ -7503,7 +7575,7 @@ function ensureCtPages(){
         '</div>'+
       '</div>'+
       (t.useTag?'<div class="persona-tags" id="ctTags_'+t.id+'"></div>':'')+
-      '<div id="ctGrid_'+t.id+'" class="'+(t.layout==='card'?'prompt-grid':'memo-grid')+'"></div>'+
+      '<div id="ctGrid_'+t.id+'" class="'+(t.layout==='card'?'prompt-grid':(t.layout==='album'?'album-grid':'memo-grid'))+'"></div>'+
       '<div style="display:flex;justify-content:center;margin-top:20px" id="ctPagi_'+t.id+'" class="pagi"></div>'+
       '<div class="empty" id="ctEmpty_'+t.id+'" style="display:none"><div>✦</div><h3>아직 항목이 없어요</h3></div>'+
     '</div>';
@@ -7569,13 +7641,45 @@ function rCustomTab(tabId){
   if(empty)empty.style.display='none';
 
   // 페이지네이션
-  var pageSize=tab.layout==='card'?8:15;
+  var pageSize=tab.layout==='card'?8:(tab.layout==='album'?12:15);
   var totalPages=Math.ceil(items.length/pageSize);
   var page=ctCurPage[tabId]||1;
   if(page>totalPages)page=totalPages;
   var paged=items.slice((page-1)*pageSize,page*pageSize);
 
-  if(tab.layout==='card'){
+  if(tab.layout==='album'){
+    grid.className='album-grid';
+    var unlocked19a=!!ct19Unlocked[tabId];
+    grid.innerHTML=paged.map(function(item){
+      var img=item.imgs&&item.imgs[0]||'';
+      var isNsfw=!!item.nsfw;
+      var blurStyle=isNsfw&&!isAdmin&&!unlocked19a?' style="filter:blur(8px);transform:scale(1.1)"':'';
+      var countBadge=(item.imgs&&item.imgs.length>1)?'<div class="album-card-count">▥ '+item.imgs.length+'</div>':'';
+      var menuBtn=isAdmin?'<button class="album-card-menu-btn" onclick="event.stopPropagation();toggleAlbumMenu(\''+tabId+'\',\''+item.id+'\',event)">⋯</button>'
+        +'<div class="album-card-drop" id="albumDrop_'+tabId+'_'+item.id+'">'
+        +'<button onclick="event.stopPropagation();openCtEditor(\''+tabId+'\',\''+item.id+'\');closeAllAlbumMenus()">수정</button>'
+        +'<button class="danger" onclick="event.stopPropagation();closeAllAlbumMenus();deleteCtItem(\''+tabId+'\',\''+item.id+'\')">삭제</button>'
+        +'</div>':'';
+      var imgPos=(item.imgPos&&item.imgPos[img])||'50% 50%';
+      var styleAttr=' style="object-position:'+imgPos+';'+(isNsfw&&!isAdmin&&!unlocked19a?'filter:blur(8px);transform:scale(1.1);':'')+'"';
+      return '<div class="album-card" onclick="openAlbumItem(\''+tabId+'\',\''+item.id+'\')">'
+        +(isNsfw?'<div class="pmt-card-nsfw">NSFW</div>':'')
+        +(img?'<img src="'+img+'" loading="lazy"'+styleAttr+'>':
+          '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:1.5rem;opacity:.12">✦</div>')
+        +countBadge
+        +menuBtn
+        +'</div>';
+    }).join('');
+    setTimeout(function(){
+      var cards=grid.querySelectorAll('.album-card');
+      if(cards.length){
+        var cardH=cards[0].offsetHeight;
+        var cols=Math.max(1,Math.round(grid.offsetWidth/(cards[0].offsetWidth+12)));
+        var rows=Math.ceil(pageSize/cols);
+        grid.style.minHeight=(cardH*rows+12*(rows-1))+'px';
+      }
+    },30);
+  } else if(tab.layout==='card'){
     grid.className='prompt-grid';
     var unlocked19=!!ct19Unlocked[tabId];
     grid.innerHTML=paged.map(function(item){
@@ -7833,6 +7937,7 @@ function openCtEditor(tabId,itemId){
   ctEditTabId=tabId;
   ctEditItemId=itemId||null;
   ctEdImgs=[];
+  ctEdImgPos={};
   var tab=getCtTabs().find(function(t){return t.id===tabId;});
   $('#ctEdTitle').textContent=itemId?'항목 수정':'항목 작성';
   $('#ctEdName').value='';
@@ -7845,6 +7950,7 @@ function openCtEditor(tabId,itemId){
       $('#ctEdName').value=item.title||'';
       $('#ctEdBody').value=item.body||'';
       ctEdImgs=(item.imgs||[]).slice();
+      ctEdImgPos=Object.assign({},item.imgPos||{});
       rCtEdImgs();
       $('#ctEdNsfw').checked=!!item.nsfw;
     }
@@ -7860,8 +7966,15 @@ function openCtEditor(tabId,itemId){
     rCtEdTags(tab,itemId);
   }else{tagWrap.style.display='none';}
 
-  // 이미지 영역 - 카드형이면 보이기
-  $('#ctEdImgWrap').style.display=(tab&&tab.layout==='card')?'':'none';
+  // 앨범형: 이미지 영역 보이기, 제목/내용 숨기기, 다중 업로드
+  var isAlbum=tab&&tab.layout==='album';
+  $('#ctEdImgWrap').style.display=(tab&&(tab.layout==='card'||isAlbum))?'':'none';
+  // 제목/내용 입력칸: 앨범형이면 숨김
+  $('#ctEdName').parentElement.style.display=isAlbum?'none':'';
+  $('#ctEdBody').parentElement.style.display=isAlbum?'none':'';
+  // 업로드 버튼이 가리킬 input 교체 (앨범형은 multi)
+  var uz=$('#ctEdImgWrap').querySelector('.uz');
+  if(uz)uz.onclick=function(){document.getElementById(isAlbum?'ctEdImgInMulti':'ctEdImgIn').click();};
 
   // 모달 열기
   $('#ctEditorDim').style.display='flex';
@@ -7908,21 +8021,71 @@ function onCtEdImg(e){
   });
   e.target.value='';
 }
+// 앨범형 이미지 위치 데이터: { url: '50% 30%' }
+var ctEdImgPos={};
+function getCtEdImgPos(src){return ctEdImgPos[src]||'50% 50%';}
 function rCtEdImgs(){
   $('#ctEdImgPv').innerHTML=ctEdImgs.map(function(src,i){
-    return '<div style="position:relative;display:inline-block"><img src="'+src+'" style="width:52px;height:52px;object-fit:cover;border-radius:7px;border:1.5px solid var(--border)">'+
-      '<button onclick="ctEdImgs.splice('+i+',1);rCtEdImgs()" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;border:none;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center">✕</button></div>';
+    var pos=getCtEdImgPos(src);
+    return '<div style="position:relative;display:inline-block">'
+      +'<img data-idx="'+i+'" src="'+src+'" draggable="false" '
+      +'style="width:52px;height:52px;object-fit:cover;object-position:'+pos+';border-radius:7px;border:1.5px solid var(--border);cursor:move;touch-action:none;user-select:none;-webkit-user-drag:none">'
+      +'<button onclick="ctEdImgs.splice('+i+',1);delete ctEdImgPos[\''+src.replace(/'/g,"\\'")+'\'];rCtEdImgs()" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;border:none;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>'
+      +'</div>';
   }).join('');
+  bindCtEdImgDrag();
+}
+
+function bindCtEdImgDrag(){
+  $('#ctEdImgPv').querySelectorAll('img[data-idx]').forEach(function(img){
+    var drag=null;
+    function parsePos(){
+      var p=(img.style.objectPosition||'50% 50%').split(' ');
+      return {x:parseFloat(p[0])||50, y:parseFloat(p[1])||50};
+    }
+    function start(e){
+      e.preventDefault();
+      var pt=e.touches?e.touches[0]:e;
+      var cur=parsePos();
+      drag={sx:pt.clientX, sy:pt.clientY, px:cur.x, py:cur.y};
+    }
+    function move(e){
+      if(!drag)return;
+      e.preventDefault();
+      var pt=e.touches?e.touches[0]:e;
+      var dx=pt.clientX-drag.sx;
+      var dy=pt.clientY-drag.sy;
+      // 썸네일 크기 52px 기준, 드래그 거리를 % 변화로 변환 (반전: 위로 드래그하면 아래쪽 노출)
+      var nx=Math.max(0,Math.min(100, drag.px - dx*(100/52)));
+      var ny=Math.max(0,Math.min(100, drag.py - dy*(100/52)));
+      var newPos=nx.toFixed(1)+'% '+ny.toFixed(1)+'%';
+      img.style.objectPosition=newPos;
+      ctEdImgPos[img.src]=newPos;
+    }
+    function end(){drag=null;}
+    img.addEventListener('mousedown',start);
+    img.addEventListener('touchstart',start,{passive:false});
+    document.addEventListener('mousemove',move);
+    document.addEventListener('touchmove',move,{passive:false});
+    document.addEventListener('mouseup',end);
+    document.addEventListener('touchend',end);
+  });
 }
 
 function saveCtItem(){
   var title=$('#ctEdName').value.trim();
   var body=$('#ctEdBody').value.trim();
-  if(!title){toast('제목을 입력해 주세요');return;}
   var items=getCtData(ctEditTabId);
   var tab=getCtTabs().find(function(t){return t.id===ctEditTabId;});
+  var isAlbum=tab&&tab.layout==='album';
+  if(!isAlbum&&!title){toast('제목을 입력해 주세요');return;}
+  if(isAlbum&&!ctEdImgs.length){toast('이미지를 1장 이상 업로드해 주세요');return;}
 
   var isNsfw=$('#ctEdNsfw').checked;
+
+  // 현재 이미지 목록에 해당하는 위치 데이터만 남김
+  var cleanPos={};
+  ctEdImgs.forEach(function(u){if(ctEdImgPos[u])cleanPos[u]=ctEdImgPos[u];});
 
   if(ctEditItemId){
     var item=items.find(function(x){return x.id===ctEditItemId;});
@@ -7930,6 +8093,7 @@ function saveCtItem(){
       item.title=title;
       item.body=body;
       item.imgs=ctEdImgs.slice();
+      item.imgPos=cleanPos;
       item.nsfw=isNsfw;
       if(tab&&tab.useTag)item.tags=ctEdSelTags.slice();
     }
@@ -7938,6 +8102,7 @@ function saveCtItem(){
       id:'ci_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
       title:title,body:body,
       imgs:ctEdImgs.slice(),
+      imgPos:cleanPos,
       nsfw:isNsfw,
       ts:Date.now()
     };
@@ -8051,7 +8216,7 @@ function rCtAdminList(){
   if(!tabs.length){wrap.innerHTML='<div style="font-size:.8rem;color:var(--text-light);padding:8px 0">추가된 탭이 없어요</div>';return;}
   wrap.innerHTML=tabs.map(function(t){
     var info=[];
-    info.push(t.layout==='card'?'카드형':'메모형');
+    info.push(t.layout==='card'?'카드형':(t.layout==='album'?'앨범형':'메모형'));
     if(t.useSub)info.push('서브탭 '+((t.subs||[]).length)+'개');
     if(t.useTag)info.push('해시태그');
     if(t.private)info.push('비공개');
@@ -8080,6 +8245,36 @@ function toggleCt19(tabId){
   var cb=$('#ct19Cb_'+tabId);
   if(cb)cb.checked=ct19Unlocked[tabId];
   rCustomTab(tabId);
+}
+
+// ── 앨범형 ──
+function openAlbumItem(tabId,itemId){
+  var items=getCtData(tabId);
+  var item=items.find(function(x){return x.id===itemId;});
+  if(!item)return;
+  // NSFW 블러 처리: 게스트는 19 해제 안 됐으면 막기
+  if(item.nsfw&&!isAdmin&&!ct19Unlocked[tabId]){toast('NSFW 항목이에요. 19 버튼으로 잠금 해제해 주세요');return;}
+  var imgs=item.imgs||[];
+  if(!imgs.length)return;
+  openLightboxMulti(imgs,0);
+}
+function toggleAlbumMenu(tabId,itemId,e){
+  e.stopPropagation();
+  var drop=$('#albumDrop_'+tabId+'_'+itemId);
+  if(!drop)return;
+  var wasOpen=drop.classList.contains('on');
+  closeAllAlbumMenus();
+  if(!wasOpen){
+    drop.classList.add('on');
+    setTimeout(function(){document.addEventListener('click',closeAllAlbumMenusOutside,{once:true});},0);
+  }
+}
+function closeAllAlbumMenus(){
+  document.querySelectorAll('.album-card-drop.on').forEach(function(el){el.classList.remove('on');});
+}
+function closeAllAlbumMenusOutside(e){
+  if(!e.target.closest('.album-card'))closeAllAlbumMenus();
+  else setTimeout(function(){document.addEventListener('click',closeAllAlbumMenusOutside,{once:true});},0);
 }
 
 // ── 우클릭 복사 ──
@@ -8415,8 +8610,11 @@ if(window._fbReady){
 
 <!-- 관리자 로그인 모달 제거됨 (Firebase Auth 사용) -->
 <!-- Image Lightbox -->
-<div class="img-lightbox" id="imgLightbox" onclick="closeLightbox()">
+<div class="img-lightbox" id="imgLightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lb-arrow left" id="lbArrowL" onclick="event.stopPropagation();lbSlide(-1)" style="display:none">‹</button>
   <img id="lightboxImg" src="">
+  <button class="lb-arrow right" id="lbArrowR" onclick="event.stopPropagation();lbSlide(1)" style="display:none">›</button>
+  <div class="lb-counter" id="lbCounter" style="display:none"></div>
 </div>
 
 </body>
