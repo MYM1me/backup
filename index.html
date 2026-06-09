@@ -1262,10 +1262,8 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
   <div class="n-logo" onclick="go('home')" id="nL">Blog</div>
   <button class="n-mob" onclick="document.querySelector('.n-links').classList.toggle('open')">☰</button>
   <div class="n-links">
-    <button class="n-link" data-p="series" onclick="go('series')" id="seriesTab">시리즈</button>
-    <button class="n-link" data-p="pair" onclick="go('pair')" id="pairTab">페어</button>
-    <button class="n-link" data-p="prompt" onclick="go('prompt')" id="promptTab">페르소나</button>
-    <span id="customTabLinks"></span>
+    <span id="navTabLinks"></span>
+    <span id="customTabLinks" style="display:none"></span>
     <button class="n-link" data-p="admin" onclick="go('admin')" id="adminTab" style="display:none">관리</button>
   </div>
   <div class="n-r">
@@ -2051,15 +2049,15 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <div class="ab-body">
         <div style="display:flex;flex-direction:column;gap:10px">
           <label style="font-size:.85rem;display:flex;align-items:center;gap:10px;cursor:pointer">
-            <input type="checkbox" id="cHideSeries" onchange="cfg.hideSeries=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin()">
+            <input type="checkbox" id="cHideSeries" onchange="cfg.hideSeries=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin();rTabOrderAdmin()">
             <span>시리즈 탭 숨기기 <span style="color:var(--text-light);font-size:.78rem">(다른 사람에게는 시리즈 탭이 안 보여요)</span></span>
           </label>
           <label style="font-size:.85rem;display:flex;align-items:center;gap:10px;cursor:pointer">
-            <input type="checkbox" id="cHidePair" onchange="cfg.hidePair=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin()">
+            <input type="checkbox" id="cHidePair" onchange="cfg.hidePair=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin();rTabOrderAdmin()">
             <span>페어 탭 숨기기 <span style="color:var(--text-light);font-size:.78rem">(다른 사람에게는 페어 탭이 안 보여요)</span></span>
           </label>
           <label style="font-size:.85rem;display:flex;align-items:center;gap:10px;cursor:pointer">
-            <input type="checkbox" id="cHidePrompt" onchange="cfg.hidePrompt=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin()">
+            <input type="checkbox" id="cHidePair" onchange="cfg.hidePair=this.checked;sv();rCustomTabNav();updateBaseTabsVisibility();rHomeSecAdmin();rTabOrderAdmin()">
             <span>페르소나 탭 숨기기 <span style="color:var(--text-light);font-size:.78rem">(다른 사람에게는 페르소나 탭이 안 보여요)</span></span>
           </label>
         </div>
@@ -2072,6 +2070,17 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
         <div id="homeSecAdminList" style="display:flex;flex-direction:column;gap:8px"></div>
         <div style="font-size:.7rem;color:var(--text-light);line-height:1.6;padding:10px 14px;background:var(--bg2);border-radius:8px;margin-top:12px">
           💡 체크된 카테고리만 홈에 표시돼요. 항목을 드래그해서 순서를 바꿀 수 있어요.
+        </div>
+        <div class="ed-b" style="margin-top:14px"><button class="btn-p" onclick="saveCfg()">Save</button></div>
+      </div>
+    </div>
+
+    <div class="ab">
+      <div class="ab-head"><div class="ab-icon"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div><div class="ab-title-wrap"><h3>상단 탭 순서</h3><div class="ab-sub">네비게이션의 탭 순서를 변경해요 (드래그 또는 화살표)</div></div></div>
+      <div class="ab-body">
+        <div id="tabOrderList" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div style="font-size:.7rem;color:var(--text-light);line-height:1.6;padding:10px 14px;background:var(--bg2);border-radius:8px;margin-top:12px">
+          💡 항목을 드래그하거나 ▲▼ 버튼으로 순서를 바꿀 수 있어요. 숨김 처리된 탭은 회색으로 표시돼요.
         </div>
         <div class="ed-b" style="margin-top:14px"><button class="btn-p" onclick="saveCfg()">Save</button></div>
       </div>
@@ -2955,6 +2964,105 @@ function bindHomeSecDrag(){
   });
 }
 
+/* === 관리 탭: 상단 탭 순서 설정 === */
+function rTabOrderAdmin(){
+  var box=$('#tabOrderList');
+  if(!box)return;
+  // 사용 가능한 모든 탭 키
+  var allKeys=['series','pair','prompt'];
+  var ctTabs=getCtTabs();
+  ctTabs.forEach(function(t){allKeys.push('ct_'+t.id);});
+  if(!cfg.tabOrder)cfg.tabOrder=[];
+  cfg.tabOrder=cfg.tabOrder.filter(function(k){return allKeys.indexOf(k)!==-1;});
+  allKeys.forEach(function(k){if(cfg.tabOrder.indexOf(k)===-1)cfg.tabOrder.push(k);});
+
+  if(!cfg.tabOrder.length){
+    box.innerHTML='<div style="font-size:.78rem;color:var(--text-light);padding:14px 0">표시 가능한 탭이 없어요.</div>';
+    return;
+  }
+
+  box.innerHTML=cfg.tabOrder.map(function(k,idx){
+    var label='',hidden=false,isPriv=false;
+    if(k==='series'){label='시리즈';hidden=!!cfg.hideSeries;}
+    else if(k==='pair'){label='페어';hidden=!!cfg.hidePair;}
+    else if(k==='prompt'){label='페르소나';hidden=!!cfg.hidePrompt;}
+    else if(k.indexOf('ct_')===0){
+      var t=ctTabs.find(function(x){return 'ct_'+x.id===k;});
+      if(!t)return '';
+      label=t.name||'(이름 없음)';
+      isPriv=!!t.private;
+    }
+    var dim=hidden?'opacity:.45;':'';
+    var hideTag=hidden?'<span style="font-size:.68rem;color:var(--text-light)">숨김</span>':'';
+    var privTag=isPriv?'<span style="font-size:.68rem;color:var(--text-light)">🔒</span>':'';
+    var isFirst=idx===0,isLast=idx===cfg.tabOrder.length-1;
+    return '<div class="tab-order-row" draggable="true" data-key="'+k+'" data-idx="'+idx+'" '
+      +'style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:8px;cursor:grab;user-select:none;'+dim+'">'
+      +'<span style="color:var(--text-light);font-size:.78rem;font-family:monospace">⋮⋮</span>'
+      +'<span style="flex:1;font-size:.85rem;font-weight:500">'+esc(label)+'</span>'
+      +privTag+hideTag
+      +'<button onclick="moveTabOrder(\''+k+'\',-1)" '+(isFirst?'disabled':'')+' '
+        +'style="background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:.7rem;'+(isFirst?'opacity:.3;cursor:not-allowed':'')+'">▲</button>'
+      +'<button onclick="moveTabOrder(\''+k+'\',1)" '+(isLast?'disabled':'')+' '
+        +'style="background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:.7rem;'+(isLast?'opacity:.3;cursor:not-allowed':'')+'">▼</button>'
+      +'</div>';
+  }).join('');
+  bindTabOrderDrag();
+}
+
+function moveTabOrder(key,dir){
+  if(!cfg.tabOrder)return;
+  var i=cfg.tabOrder.indexOf(key);
+  if(i===-1)return;
+  var ni=i+dir;
+  if(ni<0||ni>=cfg.tabOrder.length)return;
+  var tmp=cfg.tabOrder[i];
+  cfg.tabOrder[i]=cfg.tabOrder[ni];
+  cfg.tabOrder[ni]=tmp;
+  sv();
+  rTabOrderAdmin();
+  rCustomTabNav();
+}
+
+function bindTabOrderDrag(){
+  var box=$('#tabOrderList');
+  if(!box)return;
+  var rows=box.querySelectorAll('.tab-order-row');
+  var dragKey=null;
+  rows.forEach(function(row){
+    row.addEventListener('dragstart',function(e){
+      dragKey=row.getAttribute('data-key');
+      row.style.opacity='.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    row.addEventListener('dragend',function(){
+      row.style.opacity='';
+      rows.forEach(function(r){r.style.borderTop='';});
+    });
+    row.addEventListener('dragover',function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      rows.forEach(function(r){r.style.borderTop='';});
+      row.style.borderTop='2px solid var(--text)';
+    });
+    row.addEventListener('drop',function(e){
+      e.preventDefault();
+      var targetKey=row.getAttribute('data-key');
+      if(!dragKey||dragKey===targetKey)return;
+      var arr=cfg.tabOrder.slice();
+      var di=arr.indexOf(dragKey),ti=arr.indexOf(targetKey);
+      if(di===-1||ti===-1)return;
+      arr.splice(di,1);
+      var newTi=arr.indexOf(targetKey);
+      arr.splice(newTi,0,dragKey);
+      cfg.tabOrder=arr;
+      sv();
+      rTabOrderAdmin();
+      rCustomTabNav();
+    });
+  });
+}
+
 var _svgLock='<svg class="sb-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 var _svgLockDot='<svg class="sb-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><line x1="12" y1="15" x2="12" y2="18"/></svg>';
 function privBadge(p){
@@ -3790,6 +3898,7 @@ function rAdmin(){
   rHeartLinkList();
   loadMyBannerFields();
   rHomeSecAdmin();
+  rTabOrderAdmin();
 }
 
 // 기본 카테고리(시리즈/페어/페르소나) 탭 표시 토글
@@ -7335,13 +7444,37 @@ function getCtData(tabId){if(!cfg.ctData)cfg.ctData={};if(!cfg.ctData[tabId])cfg
 
 // ── Nav 탭 렌더 ──
 function rCustomTabNav(){
-  var wrap=$('#customTabLinks');
+  var wrap=$('#navTabLinks');
   if(!wrap)return;
-  var tabs=getCtTabs().filter(function(t){return !t.private||isAdmin;});
-  wrap.innerHTML=tabs.map(function(t){
-    var lockIcon=t.private?' <span style="font-size:.7em;opacity:.6">🔒</span>':'';
-    return '<button class="n-link" data-p="ct_'+t.id+'" onclick="go(\'ct_'+t.id+'\')">'+esc(t.name)+lockIcon+'</button>';
+  // 사용 가능한 모든 탭 키 목록
+  var allKeys=[];
+  allKeys.push('series');
+  allKeys.push('pair');
+  allKeys.push('prompt');
+  var ctTabs=getCtTabs().filter(function(t){return !t.private||isAdmin;});
+  ctTabs.forEach(function(t){allKeys.push('ct_'+t.id);});
+
+  // cfg.tabOrder 정리 (없으면 초기화, 사라진 항목 제거, 새 항목 뒤에 추가)
+  if(!cfg.tabOrder)cfg.tabOrder=[];
+  cfg.tabOrder=cfg.tabOrder.filter(function(k){return allKeys.indexOf(k)!==-1;});
+  allKeys.forEach(function(k){if(cfg.tabOrder.indexOf(k)===-1)cfg.tabOrder.push(k);});
+
+  // 순서대로 렌더링
+  wrap.innerHTML=cfg.tabOrder.map(function(k){
+    if(k==='series')return '<button class="n-link" data-p="series" onclick="go(\'series\')" id="seriesTab">시리즈</button>';
+    if(k==='pair')return '<button class="n-link" data-p="pair" onclick="go(\'pair\')" id="pairTab">페어</button>';
+    if(k==='prompt')return '<button class="n-link" data-p="prompt" onclick="go(\'prompt\')" id="promptTab">페르소나</button>';
+    if(k.indexOf('ct_')===0){
+      var t=ctTabs.find(function(x){return 'ct_'+x.id===k;});
+      if(!t)return '';
+      var lockIcon=t.private?' <span style="font-size:.7em;opacity:.6">🔒</span>':'';
+      return '<button class="n-link" data-p="ct_'+t.id+'" onclick="go(\'ct_'+t.id+'\')">'+esc(t.name)+lockIcon+'</button>';
+    }
+    return '';
   }).join('');
+
+  // 활성 탭 표시 복원 (다른 곳에서 처리하지만 안전장치)
+  if(typeof updateBaseTabsVisibility==='function')updateBaseTabsVisibility();
 }
 
 // ── 동적 페이지 생성 ──
@@ -7898,7 +8031,7 @@ function saveCtTab(){
     cfg.ctData[id]=[];
   }
   sv();closeCtManage();
-  rCustomTabNav();ensureCtPages();rCtAdminList();rHomeSecAdmin();
+  rCustomTabNav();ensureCtPages();rCtAdminList();rHomeSecAdmin();rTabOrderAdmin();
   toast('저장됨');
 }
 
@@ -7906,7 +8039,7 @@ function deleteCtTab(tabId){
   showModal('⚠️','이 탭과 모든 항목을 삭제할까요?','삭제',function(){
     cfg.customTabs=(cfg.customTabs||[]).filter(function(t){return t.id!==tabId;});
     if(cfg.ctData)delete cfg.ctData[tabId];
-    sv();rCustomTabNav();ensureCtPages();rCtAdminList();rHomeSecAdmin();toast('삭제됨');
+    sv();rCustomTabNav();ensureCtPages();rCtAdminList();rHomeSecAdmin();rTabOrderAdmin();toast('삭제됨');
   },{danger:true});
 }
 
