@@ -7635,7 +7635,10 @@ function rCustomTab(tabId){
 
   if(!items.length){
     grid.innerHTML='';
+    grid.style.minHeight='';
     if(empty)empty.style.display='';
+    var pagiWrapEmpty=$('#ctPagi_'+tabId);
+    if(pagiWrapEmpty)pagiWrapEmpty.innerHTML='';
     return;
   }
   if(empty)empty.style.display='none';
