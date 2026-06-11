@@ -934,7 +934,209 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
 .pmt-modal-admin button.danger:hover{background:#D4564A10}
 .pmt-modal-admin button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 
-/* ── Prompt Editor ── */
+/* ── Persona Editor / Modal Extensions ── */
+.pmt-keyword-input-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-radius:7px;border:1px solid var(--border-h);background:var(--bg);min-height:38px;cursor:text}
+.pmt-keyword-input-wrap:focus-within{border-color:var(--text-light)}
+.pmt-keyword-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--accent-soft);color:var(--text);font-size:.72rem;font-weight:400;white-space:nowrap}
+.pmt-keyword-chip button{border:none;background:none;color:var(--text-sub);cursor:pointer;font-size:.7rem;padding:0;line-height:1;font-family:inherit}
+.pmt-keyword-chip button:hover{color:#D4564A}
+.pmt-keyword-input-wrap input{border:none;outline:none;background:transparent;font-size:.78rem;color:var(--text);flex:1;min-width:80px;font-family:inherit;padding:2px 0}
+
+/* 에디터 태그 영역 */
+.pmt-ed-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-radius:7px;border:1px solid var(--border-h);background:var(--bg);min-height:38px}
+.pmt-ed-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--text);color:var(--bg);font-size:.72rem;font-weight:400;white-space:nowrap}
+.pmt-ed-tag button{border:none;background:none;color:var(--bg);cursor:pointer;font-size:.7rem;opacity:.7;padding:0;line-height:1;font-family:inherit}
+.pmt-ed-tag button:hover{opacity:1}
+.pmt-ed-tag-add{padding:3px 10px;border-radius:20px;font-size:.7rem;color:var(--text-light);cursor:pointer;border:1px dashed var(--border-h);background:transparent;font-family:inherit;position:relative}
+.pmt-ed-tag-add:hover{color:var(--text);border-color:var(--text-sub)}
+.pmt-ed-tag-drop{position:absolute;top:calc(100% + 4px);left:0;background:var(--card);border:1px solid var(--border-h);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden auto;max-height:200px;min-width:140px;z-index:60;display:none}
+.pmt-ed-tag-drop.open{display:block}
+.pmt-ed-tag-drop button{display:flex;align-items:center;justify-content:space-between;width:100%;padding:7px 12px;border:none;background:none;color:var(--text);font-size:.74rem;text-align:left;cursor:pointer;font-family:inherit;white-space:nowrap}
+.pmt-ed-tag-drop button:hover{background:var(--accent-soft)}
+.pmt-ed-tag-drop button.selected .chk{opacity:1}
+.pmt-ed-tag-drop button .chk{opacity:0;font-size:.7rem;margin-left:8px}
+
+/* 드래그 가능 블록 */
+.pmt-block-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.pmt-block{border:1px solid var(--border);border-radius:8px;background:var(--bg);padding:10px 12px;transition:border-color .15s,box-shadow .15s}
+.pmt-block.dragging{opacity:.4}
+.pmt-block.drag-over{border-color:var(--text-sub);box-shadow:0 0 0 2px var(--accent-soft)}
+.pmt-block-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pmt-block-handle{cursor:grab;color:var(--text-light);font-size:.9rem;user-select:none;padding:2px 4px;line-height:1}
+.pmt-block-handle:active{cursor:grabbing}
+.pmt-block-handle:hover{color:var(--text-sub)}
+.pmt-block-name{flex:1;border:none;outline:none;background:transparent;font-size:.78rem;font-weight:500;color:var(--text);font-family:inherit;padding:2px 0}
+.pmt-block-name[readonly]{cursor:default}
+.pmt-block-del{border:none;background:none;color:var(--text-light);cursor:pointer;font-size:.78rem;padding:2px 6px;font-family:inherit;border-radius:4px}
+.pmt-block-del:hover{color:#D4564A;background:var(--accent-soft)}
+.pmt-block-label{flex:1;font-size:.78rem;font-weight:500;color:var(--text)}
+.pmt-block textarea{width:100%;border:none;outline:none;background:transparent;font-size:.8rem;color:var(--text);font-family:inherit;resize:vertical;min-height:60px;padding:0;line-height:1.6}
+.pmt-block-add{padding:8px 14px;border-radius:7px;border:1px dashed var(--border-h);background:transparent;color:var(--text-sub);cursor:pointer;font-size:.76rem;font-family:inherit;transition:all .15s;margin-bottom:14px}
+.pmt-block-add:hover{color:var(--text);border-color:var(--text-sub);background:var(--bg)}
+
+/* ── 페르소나 프로필 모달 (좌:이미지 / 우:스크롤 내용창) ── */
+/* 핵심: 모달 높이를 viewport 기준으로 고정하고, 내용창 안에서만 스크롤 */
+.pmt-modal.persona-modal{
+  width:min(880px,95vw);
+  height:min(640px,85vh);   /* ← 명시적 고정 */
+  max-height:85vh;
+  display:flex;
+  flex-direction:row;
+  overflow:hidden;            /* ← 모달 자체는 안 늘어남 */
+}
+.pmt-modal.persona-modal .pmt-modal-img-wrap{
+  width:45%;
+  flex-shrink:0;
+  aspect-ratio:auto;
+  height:100%;                /* ← 모달 전체 높이 채움 */
+  border-radius:14px 0 0 14px;
+}
+.pmt-modal.persona-modal .pmt-modal-img-wrap img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+.pmt-modal.persona-modal .pmt-modal-content{
+  flex:1;
+  min-width:0;
+  height:100%;                /* ← 모달 전체 높이 채움 */
+  padding:28px 24px 24px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;            /* ← 내용창 자체도 안 늘어남 */
+}
+.pmt-modal.persona-modal .pmt-modal-scroll{
+  flex:1 1 0;
+  min-height:0;               /* ← flex item 스크롤 핵심 */
+  overflow-y:auto;
+  padding-right:10px;
+  margin-right:-4px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,0,0,.15) transparent;
+}
+.pmt-modal.persona-modal .pmt-modal-scroll::-webkit-scrollbar{width:6px}
+.pmt-modal.persona-modal .pmt-modal-scroll::-webkit-scrollbar-track{background:transparent}
+.pmt-modal.persona-modal .pmt-modal-scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+.pmt-modal.persona-modal .pmt-modal-scroll::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.3)}
+.pmt-modal.persona-modal .pmt-modal-admin{
+  flex-shrink:0;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+}
+/* 모바일: 세로 배치 + 이미지 비율 복귀 */
+@media(max-width:720px){
+  .pmt-modal.persona-modal{
+    flex-direction:column;
+    width:min(520px,95vw);
+    height:min(85vh,800px);
+  }
+  .pmt-modal.persona-modal .pmt-modal-img-wrap{
+    width:100%;
+    height:auto;
+    aspect-ratio:2/3;
+    flex-shrink:0;
+    border-radius:14px 14px 0 0;
+  }
+  .pmt-modal.persona-modal .pmt-modal-content{
+    padding:24px;
+  }
+}
+
+/* ── 페르소나 모달 내부 디자인 (톤 통일 + B안: 가로선 라벨) ── */
+
+/* 이름: 시원하게 크게 */
+.pmt-modal.persona-modal .pmt-modal-title{
+  font-size:1.4rem;
+  font-weight:500;
+  letter-spacing:-0.01em;
+  line-height:1.2;
+  color:var(--text);
+  margin-bottom:6px;
+}
+
+/* 날짜: 작고 옅게 */
+.pmt-modal.persona-modal .pmt-modal-date{
+  font-size:.68rem;
+  color:var(--text-light);
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:.05em;
+  margin-bottom:10px;
+}
+
+/* 키워드: 칩 대신 # 인라인 텍스트 */
+.pmt-modal.persona-modal .pmt-modal-keywords{
+  display:block;
+  margin:0 0 12px;
+  font-size:.74rem;
+  color:var(--text-sub);
+  line-height:1.6;
+}
+.pmt-modal.persona-modal .pmt-modal-kw{
+  display:inline;
+  padding:0;
+  background:none;
+  border-radius:0;
+  font-size:.74rem;
+  color:var(--text-sub);
+  font-weight:400;
+  margin-right:8px;
+}
+.pmt-modal.persona-modal .pmt-modal-kw::before{
+  content:'#';
+  color:var(--text-light);
+  margin-right:3px;
+}
+
+/* 태그 영역: 키워드와 시각적으로 구분되게 살짝 띄움 */
+.pmt-modal.persona-modal .pmt-modal-tags{
+  margin:0 0 4px;
+}
+
+/* 라벨 (속성명 + "프롬프트"): 카드 위에 진한 텍스트 */
+.pmt-modal.persona-modal .pmt-modal-attr-name,
+.pmt-modal.persona-modal .pmt-modal-body-label{
+  display:block;
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--text);
+  text-transform:none;
+  letter-spacing:.01em;
+  margin-bottom:6px;
+}
+/* 가로선은 제거 */
+.pmt-modal.persona-modal .pmt-modal-attr-name::before,
+.pmt-modal.persona-modal .pmt-modal-body-label::before{
+  content:none;
+}
+
+/* 블록 사이 간격 */
+.pmt-modal.persona-modal .pmt-modal-attr{
+  margin-top:16px;
+}
+.pmt-modal.persona-modal .pmt-modal-body-label{
+  margin-top:16px;
+}
+
+/* 속성 값 / 본문: 옅은 베이지 카드 박스 */
+.pmt-modal.persona-modal .pmt-modal-attr-value,
+.pmt-modal.persona-modal .pmt-modal-prompt{
+  font-size:.82rem;
+  line-height:1.7;
+  color:var(--text);
+  background:var(--bg);
+  padding:10px 13px;
+  border:none;
+  border-radius:7px;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+/* 첫 블록은 위 마진 줄이기 (태그 바로 아래 자연스럽게) */
+.pmt-modal.persona-modal #pmtModalBlocks > *:first-child{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+}
+
 .pmt-editor{max-width:520px;margin:0 auto}
 .pmt-editor .ef label{font-size:.75rem;color:var(--text-sub);font-weight:500;display:block;margin-bottom:5px}
 .pmt-editor input,.pmt-editor textarea,.pmt-editor select{width:100%;padding:9px 12px;border-radius:7px;border:1px solid var(--border-h);background:var(--bg);color:var(--text);font-size:.86rem;outline:none;font-family:inherit}
@@ -1703,24 +1905,22 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
 
 <!-- PROMPT EDITOR MODAL -->
 <div class="pair-modal-dim" id="pmtEditorDim" onclick="if(event.target===this)closePmtEditor()">
-  <div class="pair-modal" style="max-width:480px;max-height:85vh;overflow-y:auto">
-    <h3 id="pmtEdTitle">프롬프트 작성</h3>
+  <div class="pair-modal" style="max-width:520px;max-height:85vh;overflow-y:auto">
+    <h3 id="pmtEdTitle">페르소나 작성</h3>
+    <input type="hidden" id="pmtEdType" value="persona">
     <div class="ef">
-      <label>분류</label>
-      <select id="pmtEdType" onchange="togglePmtNsfwCheck();togglePmtTitle()">
-        <option value="persona">페르소나</option>
-        <option value="costume">의상</option>
-        <option value="pose">구도</option>
-        <option value="set">세트</option>
-      </select>
+      <label>이름</label>
+      <input type="text" id="pmtEdName" placeholder="페르소나 이름">
     </div>
-    <div class="ef" id="pmtTitleWrap">
-      <label>제목</label>
-      <input type="text" id="pmtEdName" placeholder="프롬프트 제목">
+    <div class="ef">
+      <label>키워드 <span style="font-weight:300;color:var(--text-light);font-size:.68rem">(쉼표 또는 Enter로 구분)</span></label>
+      <div class="pmt-keyword-input-wrap" id="pmtKwWrap" onclick="document.getElementById('pmtKwIn').focus()">
+        <input type="text" id="pmtKwIn" placeholder="키워드 입력 후 쉼표/Enter">
+      </div>
     </div>
-    <div class="ef" id="pmtAutoNumWrap" style="display:none">
-      <label>제목 <span style="font-weight:300;color:var(--text-light)">(자동 넘버링)</span></label>
-      <div id="pmtAutoNumPreview" style="padding:9px 12px;border-radius:7px;border:1px solid var(--border-h);background:var(--bg);color:var(--text);font-size:.86rem;font-family:'IBM Plex Mono',monospace"></div>
+    <div class="ef">
+      <label>태그</label>
+      <div class="pmt-ed-tags" id="pmtEdTagsBox"></div>
     </div>
     <div class="ef">
       <label>이미지 <span style="color:#E16B5A">*</span> <span style="font-weight:300;color:var(--text-light);font-size:.68rem">(여러 장 가능)</span></label>
@@ -1729,13 +1929,9 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <div class="pmt-img-list" id="pmtImgList"></div>
     </div>
     <div class="ef">
-      <label>프롬프트 내용</label>
-      <textarea id="pmtEdBody" placeholder="프롬프트를 입력하세요" rows="6" style="min-height:150px"></textarea>
-    </div>
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
-      <label style="font-size:.78rem;color:var(--text-sub);display:flex;align-items:center;gap:5px;cursor:pointer">
-        <input type="checkbox" id="pmtEdNsfw" style="accent-color:#E16B5A"> NSFW
-      </label>
+      <label>내용 <span style="font-weight:300;color:var(--text-light);font-size:.68rem">(드래그로 순서 변경)</span></label>
+      <div class="pmt-block-list" id="pmtBlockList"></div>
+      <button type="button" class="pmt-block-add" onclick="addPmtCustomAttr()">+ 커스텀 속성 추가</button>
     </div>
     <div class="ef">
       <label>공개 설정</label>
@@ -1766,7 +1962,7 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
 
 <!-- PROMPT DETAIL MODAL -->
 <div class="pmt-modal-dim" id="pmtModalDim" onclick="if(event.target===this)closePmtModal()">
-  <div class="pmt-modal" style="position:relative">
+  <div class="pmt-modal persona-modal" style="position:relative">
     <button class="pmt-modal-close" onclick="closePmtModal()">✕</button>
     <div class="pmt-modal-img-wrap" id="pmtModalImgWrap">
       <img id="pmtModalImg">
@@ -1775,28 +1971,32 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <div class="pmt-modal-dots" id="pmtDots"></div>
     </div>
     <div class="pmt-modal-content">
-      <div class="pmt-modal-title" id="pmtModalTitle"></div>
-      <div class="pmt-modal-date" id="pmtModalDate"></div>
-      <!-- 태그 표시 (로그인 여부 상관없이, 있으면 표시) -->
-      <div class="pmt-modal-tags" id="pmtModalTagsView" style="display:none"></div>
-      <!-- 비밀번호 입력 영역 -->
-      <div id="pmtPwArea" style="display:none;text-align:center;padding:20px 0">
-        <div style="font-size:.85rem;color:var(--text-sub);margin-bottom:12px">비밀번호가 필요한 프롬프트예요</div>
-        <div style="display:flex;gap:8px;justify-content:center;align-items:center">
-          <input type="password" id="pmtPwIn" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')checkPmtPw()" style="padding:8px 12px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.84rem;width:160px;outline:none;font-family:inherit">
-          <button class="btn-p" onclick="checkPmtPw()" style="padding:8px 16px;font-size:.82rem">확인</button>
+      <div class="pmt-modal-scroll">
+        <div class="pmt-modal-title" id="pmtModalTitle"></div>
+        <div class="pmt-modal-date" id="pmtModalDate"></div>
+        <!-- 키워드 칩 -->
+        <div class="pmt-modal-keywords" id="pmtModalKeywords" style="display:none"></div>
+        <!-- 태그 표시 -->
+        <div class="pmt-modal-tags" id="pmtModalTagsView" style="display:none"></div>
+        <!-- 비밀번호 입력 영역 -->
+        <div id="pmtPwArea" style="display:none;text-align:center;padding:20px 0">
+          <div style="font-size:.85rem;color:var(--text-sub);margin-bottom:12px">비밀번호가 필요한 프롬프트예요</div>
+          <div style="display:flex;gap:8px;justify-content:center;align-items:center">
+            <input type="password" id="pmtPwIn" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')checkPmtPw()" style="padding:8px 12px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.84rem;width:160px;outline:none;font-family:inherit">
+            <button class="btn-p" onclick="checkPmtPw()" style="padding:8px 16px;font-size:.82rem">확인</button>
+          </div>
+          <div id="pmtPwErr" style="font-size:.74rem;color:#D4564A;margin-top:8px;display:none">비밀번호가 틀렸어요</div>
         </div>
-        <div id="pmtPwErr" style="font-size:.74rem;color:#D4564A;margin-top:8px;display:none">비밀번호가 틀렸어요</div>
-      </div>
-      <!-- 프롬프트 내용 영역 -->
-      <div id="pmtBodyArea" style="display:none">
-        <div class="pmt-modal-prompt" id="pmtModalBody"></div>
-        <button onclick="copyPromptText()" style="margin-top:10px;padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text-sub);font-size:.76rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;font-family:inherit">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          복사
-        </button>
+        <!-- 본문 + 커스텀 속성 영역 (순서대로 렌더) -->
+        <div id="pmtBodyArea" style="display:none">
+          <div id="pmtModalBlocks"></div>
+        </div>
       </div>
       <div class="pmt-modal-admin" id="pmtModalAdmin" style="display:none">
+        <button class="pmt-copy-btn" onclick="copyPromptText()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          프롬프트 복사
+        </button>
         <button onclick="editPromptFromModal()">수정</button>
         <button class="danger" onclick="deletePromptFromModal()">삭제</button>
       </div>
@@ -7128,8 +7328,15 @@ function openPmtModal(id){
   var imgs=getImgs(p);
   $('#pmtModalTitle').textContent=p.title;
   $('#pmtModalDate').textContent=fDT(p.ts);
-  $('#pmtModalAdmin').style.display=isAdmin?'flex':'none';
-  // 태그 표시 + 관리자면 + 버튼 같이 렌더 (드롭다운은 기본 닫힘)
+  // admin 영역 자체는 항상 보이게 (복사 버튼이 들어있음), 대신 수정/삭제 버튼만 관리자에게
+  var adminBox=$('#pmtModalAdmin');
+  adminBox.style.display='flex';
+  adminBox.querySelectorAll('button:not(.pmt-copy-btn)').forEach(function(btn){
+    btn.style.display=isAdmin?'':'none';
+  });
+  // 키워드 칩
+  renderPmtModalKeywords(p);
+  // 태그 표시
   rPmtModalTags(p);
   var needPw=p.priv==='pw'&&!isAdmin;
   var wrap=$('#pmtModalImgWrap');
@@ -7139,19 +7346,69 @@ function openPmtModal(id){
     $('#pmtBodyArea').style.display='none';
     $('#pmtPwErr').style.display='none';
     $('#pmtPwIn').value='';
+    // 비번 잠금 시 복사 버튼 숨김
+    var cbtn=adminBox.querySelector('.pmt-copy-btn');
+    if(cbtn)cbtn.style.display='none';
   }else{
+    var cbtn2=adminBox.querySelector('.pmt-copy-btn');
+    if(cbtn2)cbtn2.style.display='';
     wrap.style.display='';
     showPmtCarousel(imgs);
     $('#pmtPwArea').style.display='none';
     $('#pmtBodyArea').style.display='';
-    $('#pmtModalBody').textContent=p.body;
+    renderPmtModalBlocks(p);
   }
   var dim=$('#pmtModalDim');
   dim.classList.add('on');
   dim.scrollTop=0;
+  // 내용창 스크롤도 최상단으로
+  var scrollEl=dim.querySelector('.pmt-modal-scroll');
+  if(scrollEl)scrollEl.scrollTop=0;
   document.body.style.overflow='hidden';
   fitPmtModal(dim);
   if(needPw)setTimeout(function(){$('#pmtPwIn').focus()},200);
+}
+
+/* 프로필 모달: 키워드 칩 렌더 */
+function renderPmtModalKeywords(p){
+  var box=$('#pmtModalKeywords');
+  if(!box)return;
+  var kws=Array.isArray(p.keywords)?p.keywords:[];
+  if(!kws.length){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='';
+  box.innerHTML=kws.map(function(kw){return '<span class="pmt-modal-kw">'+esc(kw)+'</span>'}).join('');
+}
+
+/* 프로필 모달: 본문 + 커스텀 속성을 작성 순서대로 렌더 */
+function renderPmtModalBlocks(p){
+  var box=$('#pmtModalBlocks');
+  if(!box)return;
+  var attrs=Array.isArray(p.customAttrs)?p.customAttrs:[];
+  var order=Array.isArray(p.blockOrder)&&p.blockOrder.length?p.blockOrder.slice():null;
+  if(!order){
+    // 구버전: attrs 먼저, body 마지막
+    order=attrs.map(function(a){return a.id});
+    order.push('__body__');
+  }
+  // 누락 보정
+  attrs.forEach(function(a){if(order.indexOf(a.id)===-1)order.push(a.id)});
+  if(order.indexOf('__body__')===-1)order.push('__body__');
+  var html='';
+  order.forEach(function(key){
+    if(key==='__body__'){
+      html+='<div class="pmt-modal-body-label">프롬프트</div>'
+        +'<div class="pmt-modal-prompt" id="pmtModalBody">'+esc(p.body||'')+'</div>';
+    }else{
+      var a=attrs.find(function(x){return x.id===key});
+      if(!a)return;
+      if(!a.name && !a.value)return;
+      html+='<div class="pmt-modal-attr">'
+        +'<div class="pmt-modal-attr-name">'+esc(a.name||'')+'</div>'
+        +'<div class="pmt-modal-attr-value">'+esc(a.value||'')+'</div>'
+        +'</div>';
+    }
+  });
+  box.innerHTML=html;
 }
 
 /* 프롬프트 모달 내 태그 표시 + 관리자 편집 (인라인 드롭다운) */
@@ -7310,7 +7567,9 @@ function checkPmtPw(){
     showPmtCarousel(imgs);
     $('#pmtPwArea').style.display='none';
     $('#pmtBodyArea').style.display='';
-    $('#pmtModalBody').textContent=p.body;
+    renderPmtModalBlocks(p);
+    var cbtn=document.querySelector('#pmtModalAdmin .pmt-copy-btn');
+    if(cbtn)cbtn.style.display='';
   }else{
     $('#pmtPwErr').style.display='';
     $('#pmtPwIn').value='';
@@ -7321,6 +7580,8 @@ function fitPmtModal(dim){
   var modal=dim.querySelector('.pmt-modal');
   if(!modal)return;
   modal.style.zoom='';
+  // 페르소나 모달은 자체 스크롤 처리하므로 zoom 축소 안 함
+  if(modal.classList.contains('persona-modal'))return;
   var mw=modal.offsetWidth, mh=modal.offsetHeight;
   var vw=window.innerWidth-40, vh=window.innerHeight-40;
   var s=Math.min(1, vw/mw, vh/mh);
@@ -7332,6 +7593,7 @@ function closePmtModal(){
   dim.scrollTop=0;
   var modal=dim.querySelector('.pmt-modal');if(modal){modal.scrollTop=0;modal.style.zoom='';}
   var content=dim.querySelector('.pmt-modal-content');if(content)content.scrollTop=0;
+  var scrollEl=dim.querySelector('.pmt-modal-scroll');if(scrollEl)scrollEl.scrollTop=0;
   document.body.style.overflow='';
   pmtViewId=null;
 }
@@ -7388,77 +7650,328 @@ function removePmtImg(i){
   pmtImgList.splice(i,1);
   rPmtImgList();
 }
+/* ── 에디터 상태 (페르소나 개편) ── */
+var pmtEdKeywords=[]; // 키워드 배열
+var pmtEdTags=[];     // 태그 id 배열
+var pmtEdAttrs=[];    // [{id, name, value}]
+var pmtEdOrder=[];    // ['__body__', 'attr_xxx', ...]
+var pmtEdBodyText=''; // 본문 내용 (블록 렌더 사이에 유지)
+
 function initPmtEditor(){
   if(pmtEditId){
     var p=prompts.find(function(x){return x.id===pmtEditId});
     if(p){
-      $('#pmtEdTitle').textContent='프롬프트 수정';
-      $('#pmtEdType').value=p.type;
-      $('#pmtEdName').value=p.title;
-      $('#pmtEdBody').value=p.body;
-      $('#pmtEdNsfw').checked=!!p.nsfw;
+      $('#pmtEdTitle').textContent='페르소나 수정';
+      $('#pmtEdName').value=p.title||'';
+      pmtEdKeywords=Array.isArray(p.keywords)?p.keywords.slice():[];
+      pmtEdTags=Array.isArray(p.tags)?p.tags.slice():[];
+      pmtEdAttrs=Array.isArray(p.customAttrs)?p.customAttrs.map(function(a){return {id:a.id||('attr_'+Math.random().toString(36).slice(2,9)),name:a.name||'',value:a.value||''}}):[];
+      pmtEdBodyText=p.body||'';
+      // 순서 복원: 저장된 게 있으면 사용, 없으면 attrs 먼저 + body 마지막
+      if(Array.isArray(p.blockOrder)&&p.blockOrder.length){
+        pmtEdOrder=p.blockOrder.slice();
+        // 누락 보정
+        pmtEdAttrs.forEach(function(a){if(pmtEdOrder.indexOf(a.id)===-1)pmtEdOrder.push(a.id)});
+        if(pmtEdOrder.indexOf('__body__')===-1)pmtEdOrder.push('__body__');
+      }else{
+        pmtEdOrder=pmtEdAttrs.map(function(a){return a.id});
+        pmtEdOrder.push('__body__');
+      }
       pmtImgList=getImgs(p).slice();
       rPmtImgList();
       setPmtPriv(p.priv||'');
       if(p.priv==='pw')$('#pmtEdPrivPw').value=p.privPw||'';
-      togglePmtNsfwCheck();
-      // 수정 시 기존 번호 표시
-      if(p.type!=='persona'){
-        $('#pmtTitleWrap').style.display='none';
-        $('#pmtAutoNumWrap').style.display='';
-        $('#pmtAutoNumPreview').textContent=p.title;
-      }else{
-        $('#pmtTitleWrap').style.display='';
-        $('#pmtAutoNumWrap').style.display='none';
-      }
+      renderPmtKeywords();
+      renderPmtEdTags();
+      renderPmtBlocks();
       return;
     }
   }
   // 새 작성
-  $('#pmtEdTitle').textContent='프롬프트 작성';
-  $('#pmtEdType').value=curPromptTab;
+  $('#pmtEdTitle').textContent='페르소나 작성';
   $('#pmtEdName').value='';
-  $('#pmtEdBody').value='';
-  $('#pmtEdNsfw').checked=false;
+  pmtEdKeywords=[];
+  pmtEdTags=[];
+  pmtEdAttrs=[];
+  pmtEdBodyText='';
+  pmtEdOrder=['__body__'];
   pmtImgList=[];
   rPmtImgList();
   document.getElementById('pmtImgIn').value='';
   setPmtPriv('');
   $('#pmtEdPrivPw').value='';
-  togglePmtNsfwCheck();
-  togglePmtTitle();
+  renderPmtKeywords();
+  renderPmtEdTags();
+  renderPmtBlocks();
 }
-function savePrompt(){
-  var type=$('#pmtEdType').value;
-  var isPersona=type==='persona';
-  var title;
-  if(isPersona){
-    title=$('#pmtEdName').value.trim();
-    if(!title){showAlert('⚠️','제목을 입력해주세요');return;}
-  }else{
-    // 수정 시 기존 번호 유지, 새 작성 시 자동 넘버링
-    if(pmtEditId){
-      var ep=prompts.find(function(x){return x.id===pmtEditId});
-      title=ep?ep.title:String(getNextPmtNum(type)).padStart(2,'0');
-    }else{
-      title=String(getNextPmtNum(type)).padStart(2,'0');
-    }
+
+/* ── 키워드 입력 ── */
+function renderPmtKeywords(){
+  var wrap=$('#pmtKwWrap');
+  if(!wrap)return;
+  // 기존 칩 제거
+  wrap.querySelectorAll('.pmt-keyword-chip').forEach(function(el){el.remove()});
+  var input=$('#pmtKwIn');
+  pmtEdKeywords.forEach(function(kw,i){
+    var span=document.createElement('span');
+    span.className='pmt-keyword-chip';
+    span.innerHTML=esc(kw)+'<button type="button" onclick="removePmtKeyword('+i+')">✕</button>';
+    wrap.insertBefore(span,input);
+  });
+}
+function removePmtKeyword(i){
+  pmtEdKeywords.splice(i,1);
+  renderPmtKeywords();
+}
+function commitPmtKeyword(){
+  var input=$('#pmtKwIn');
+  var val=input.value.trim().replace(/,$/,'').trim();
+  if(val && pmtEdKeywords.indexOf(val)===-1){
+    pmtEdKeywords.push(val);
+    renderPmtKeywords();
   }
-  var body=$('#pmtEdBody').value.trim();
-  var nsfw=$('#pmtEdNsfw').checked;
+  input.value='';
+}
+// 입력 이벤트 바인딩 (한 번만)
+document.addEventListener('DOMContentLoaded',function(){
+  var input=document.getElementById('pmtKwIn');
+  if(!input)return;
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===','){
+      e.preventDefault();
+      commitPmtKeyword();
+    }else if(e.key==='Backspace' && !input.value && pmtEdKeywords.length){
+      pmtEdKeywords.pop();
+      renderPmtKeywords();
+    }
+  });
+  input.addEventListener('input',function(){
+    if(input.value.indexOf(',')!==-1){
+      input.value=input.value.replace(/,/g,'');
+      commitPmtKeyword();
+    }
+  });
+  input.addEventListener('blur',commitPmtKeyword);
+});
+
+/* ── 에디터 태그 ── */
+function renderPmtEdTags(){
+  var box=$('#pmtEdTagsBox');
+  if(!box)return;
+  var allTags=getAllPersonaTags(); // 기존 함수 사용 (전체 페르소나 태그 목록)
+  var html='';
+  pmtEdTags.forEach(function(tid){
+    var name=getPersonaTagName(tid);
+    if(!name)return;
+    html+='<span class="pmt-ed-tag">'+esc(name)+'<button type="button" onclick="removePmtEdTag(\''+tid+'\')">✕</button></span>';
+  });
+  html+='<span class="pmt-ed-tag-add" onclick="togglePmtEdTagDrop(event)">+ 태그<div class="pmt-ed-tag-drop" id="pmtEdTagDrop"></div></span>';
+  box.innerHTML=html;
+}
+function removePmtEdTag(tid){
+  pmtEdTags=pmtEdTags.filter(function(t){return t!==tid});
+  renderPmtEdTags();
+}
+function togglePmtEdTagDrop(e){
+  e.stopPropagation();
+  var drop=$('#pmtEdTagDrop');
+  if(!drop)return;
+  var isOpen=drop.classList.contains('open');
+  if(isOpen){drop.classList.remove('open');return;}
+  // 채우기
+  var allTags=getAllPersonaTags();
+  if(!allTags.length){
+    drop.innerHTML='<div style="padding:10px 12px;font-size:.72rem;color:var(--text-light)">태그가 없어요</div>';
+  }else{
+    drop.innerHTML=allTags.map(function(t){
+      var isOn=pmtEdTags.indexOf(t.id)!==-1;
+      return '<button type="button" class="'+(isOn?'selected':'')+'" onclick="event.stopPropagation();togglePmtEdTagPick(\''+t.id+'\')"><span>'+esc(t.name)+'</span><span class="chk">✓</span></button>';
+    }).join('');
+  }
+  drop.classList.add('open');
+  setTimeout(function(){
+    document.addEventListener('click',closePmtEdTagDropOnce);
+  },10);
+}
+function closePmtEdTagDropOnce(){
+  var drop=$('#pmtEdTagDrop');
+  if(drop)drop.classList.remove('open');
+  document.removeEventListener('click',closePmtEdTagDropOnce);
+}
+function togglePmtEdTagPick(tid){
+  var idx=pmtEdTags.indexOf(tid);
+  if(idx===-1)pmtEdTags.push(tid);
+  else pmtEdTags.splice(idx,1);
+  renderPmtEdTags();
+  // 드롭다운 다시 열기 (방금 닫혔으니)
+  setTimeout(function(){
+    var drop=$('#pmtEdTagDrop');
+    if(drop && !drop.classList.contains('open')){
+      var fakeEvt={stopPropagation:function(){}};
+      togglePmtEdTagDrop(fakeEvt);
+    }
+  },20);
+}
+
+/* getAllPersonaTags: cfg.personaTags 등에서 전체 태그 끌어오기 */
+function getAllPersonaTags(){
+  // 기존 코드가 cfg.personaTags 또는 비슷한 곳에 저장 — 없으면 빈 배열
+  if(typeof cfg!=='undefined' && Array.isArray(cfg.personaTags))return cfg.personaTags;
+  if(window._personaTags)return window._personaTags;
+  return [];
+}
+
+/* ── 블록 렌더 (커스텀 속성 + 본문, 드래그 가능) ── */
+function renderPmtBlocks(){
+  // 본문 textarea 현재 값 보존
+  var bodyEl=document.getElementById('pmtEdBody');
+  if(bodyEl)pmtEdBodyText=bodyEl.value;
+  // 커스텀 속성 입력값 보존
+  pmtEdAttrs.forEach(function(a){
+    var ne=document.getElementById('pmtAttrName_'+a.id);
+    var ve=document.getElementById('pmtAttrVal_'+a.id);
+    if(ne)a.name=ne.value;
+    if(ve)a.value=ve.value;
+  });
+  var list=$('#pmtBlockList');
+  if(!list)return;
+  var html='';
+  pmtEdOrder.forEach(function(key){
+    if(key==='__body__'){
+      html+='<div class="pmt-block" draggable="true" data-bkey="__body__" ondragstart="pmtBlockDragStart(event)" ondragend="pmtBlockDragEnd(event)" ondragover="pmtBlockDragOver(event)" ondragleave="pmtBlockDragLeave(event)" ondrop="pmtBlockDrop(event)">'
+        +'<div class="pmt-block-head"><span class="pmt-block-handle">⋮⋮</span><span class="pmt-block-label">프롬프트</span></div>'
+        +'<textarea id="pmtEdBody" placeholder="프롬프트 내용을 입력하세요" rows="6">'+esc(pmtEdBodyText)+'</textarea>'
+        +'</div>';
+    }else{
+      var attr=pmtEdAttrs.find(function(a){return a.id===key});
+      if(!attr)return;
+      html+='<div class="pmt-block" draggable="true" data-bkey="'+attr.id+'" ondragstart="pmtBlockDragStart(event)" ondragend="pmtBlockDragEnd(event)" ondragover="pmtBlockDragOver(event)" ondragleave="pmtBlockDragLeave(event)" ondrop="pmtBlockDrop(event)">'
+        +'<div class="pmt-block-head">'
+        +'<span class="pmt-block-handle">⋮⋮</span>'
+        +'<input type="text" class="pmt-block-name" id="pmtAttrName_'+attr.id+'" placeholder="속성 이름" value="'+esc(attr.name)+'">'
+        +'<button type="button" class="pmt-block-del" onclick="removePmtCustomAttr(\''+attr.id+'\')">삭제</button>'
+        +'</div>'
+        +'<textarea id="pmtAttrVal_'+attr.id+'" placeholder="속성 내용" rows="3">'+esc(attr.value)+'</textarea>'
+        +'</div>';
+    }
+  });
+  list.innerHTML=html;
+}
+function addPmtCustomAttr(){
+  // 현재 입력값 보존
+  var bodyEl=document.getElementById('pmtEdBody');
+  if(bodyEl)pmtEdBodyText=bodyEl.value;
+  pmtEdAttrs.forEach(function(a){
+    var ne=document.getElementById('pmtAttrName_'+a.id);
+    var ve=document.getElementById('pmtAttrVal_'+a.id);
+    if(ne)a.name=ne.value;
+    if(ve)a.value=ve.value;
+  });
+  var id='attr_'+Math.random().toString(36).slice(2,9);
+  pmtEdAttrs.push({id:id,name:'',value:''});
+  // 본문 앞에 삽입 (본문은 항상 마지막 근처)
+  var bodyIdx=pmtEdOrder.indexOf('__body__');
+  if(bodyIdx===-1)pmtEdOrder.push(id);
+  else pmtEdOrder.splice(bodyIdx,0,id);
+  renderPmtBlocks();
+}
+function removePmtCustomAttr(id){
+  pmtEdAttrs=pmtEdAttrs.filter(function(a){return a.id!==id});
+  pmtEdOrder=pmtEdOrder.filter(function(k){return k!==id});
+  renderPmtBlocks();
+}
+
+/* ── 블록 드래그 ── */
+var _pmtDragKey=null;
+function pmtBlockDragStart(e){
+  _pmtDragKey=e.currentTarget.dataset.bkey;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function pmtBlockDragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.pmt-block.drag-over').forEach(function(el){el.classList.remove('drag-over')});
+  _pmtDragKey=null;
+}
+function pmtBlockDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  var target=e.currentTarget;
+  if(target.dataset.bkey!==_pmtDragKey)target.classList.add('drag-over');
+}
+function pmtBlockDragLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+function pmtBlockDrop(e){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  var targetKey=e.currentTarget.dataset.bkey;
+  if(!_pmtDragKey||_pmtDragKey===targetKey)return;
+  // 현재 입력값 보존 후 재정렬
+  var bodyEl=document.getElementById('pmtEdBody');
+  if(bodyEl)pmtEdBodyText=bodyEl.value;
+  pmtEdAttrs.forEach(function(a){
+    var ne=document.getElementById('pmtAttrName_'+a.id);
+    var ve=document.getElementById('pmtAttrVal_'+a.id);
+    if(ne)a.name=ne.value;
+    if(ve)a.value=ve.value;
+  });
+  var fromIdx=pmtEdOrder.indexOf(_pmtDragKey);
+  var toIdx=pmtEdOrder.indexOf(targetKey);
+  if(fromIdx===-1||toIdx===-1)return;
+  pmtEdOrder.splice(fromIdx,1);
+  pmtEdOrder.splice(toIdx,0,_pmtDragKey);
+  renderPmtBlocks();
+}
+
+/* ── 저장 ── */
+function savePrompt(){
+  var title=$('#pmtEdName').value.trim();
+  if(!title){showAlert('⚠️','이름을 입력해주세요');return;}
+  // 본문 + 속성 현재 값 가져오기
+  var bodyEl=document.getElementById('pmtEdBody');
+  var body=bodyEl?bodyEl.value.trim():'';
+  pmtEdAttrs.forEach(function(a){
+    var ne=document.getElementById('pmtAttrName_'+a.id);
+    var ve=document.getElementById('pmtAttrVal_'+a.id);
+    if(ne)a.name=ne.value.trim();
+    if(ve)a.value=ve.value.trim();
+  });
+  // 빈 속성 제거
+  var validAttrs=pmtEdAttrs.filter(function(a){return a.name||a.value});
+  var validIds=validAttrs.map(function(a){return a.id});
+  var cleanOrder=pmtEdOrder.filter(function(k){return k==='__body__'||validIds.indexOf(k)!==-1});
+  if(cleanOrder.indexOf('__body__')===-1)cleanOrder.push('__body__');
   var priv=document.querySelector('[data-ppriv].on');
   priv=priv?priv.dataset.ppriv:'';
   var privPw=priv==='pw'?$('#pmtEdPrivPw').value.trim():'';
   if(!pmtImgList.length){showAlert('⚠️','이미지를 1장 이상 업로드해주세요');return;}
   if(!body){showAlert('⚠️','프롬프트 내용을 입력해주세요');return;}
   if(priv==='pw'&&!privPw){showAlert('⚠️','비밀번호를 입력해주세요');return;}
+  var payload={
+    type:'persona',
+    title:title,
+    body:body,
+    keywords:pmtEdKeywords.slice(),
+    tags:pmtEdTags.slice(),
+    customAttrs:validAttrs.map(function(a){return {id:a.id,name:a.name,value:a.value}}),
+    blockOrder:cleanOrder,
+    imgs:pmtImgList.slice(),
+    img:pmtImgList[0],
+    priv:priv,
+    privPw:privPw
+  };
   if(pmtEditId){
     var p=prompts.find(function(x){return x.id===pmtEditId});
-    if(p){p.type=type;p.title=title;p.body=body;p.nsfw=nsfw;p.imgs=pmtImgList.slice();p.img=pmtImgList[0];p.priv=priv;p.privPw=privPw;}
+    if(p){
+      for(var k in payload)p[k]=payload[k];
+    }
   }else{
-    prompts.push({id:Date.now(),type:type,title:title,body:body,nsfw:nsfw,imgs:pmtImgList.slice(),img:pmtImgList[0],ts:Date.now(),priv:priv,privPw:privPw});
+    payload.id=Date.now();
+    payload.ts=Date.now();
+    prompts.push(payload);
   }
-  sv();pmtEditId=null;curPromptTab=type;closePmtEditor();rPromptGrid();toast('저장됨');
+  sv();pmtEditId=null;curPromptTab='persona';closePmtEditor();rPromptGrid();toast('저장됨');
 }
 
 /* Prompt Editor Modal open/close */
