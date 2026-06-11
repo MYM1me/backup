@@ -237,12 +237,10 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
 .pair-char-img .pair-char-upload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);opacity:0;transition:opacity .2s;color:#fff;font-size:.78rem;cursor:pointer}
 .pair-char-img:hover .pair-char-upload{opacity:1}
 /* Center message column */
-.pair-msg-col{display:flex;flex-direction:column;padding:0 16px;min-height:300px;position:relative;box-sizing:border-box}
-.pair-msg-scroll{flex:1 1 auto;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;display:flex;flex-direction:column}
+.pair-msg-col{display:flex;flex-direction:column;padding:40px 16px 0;min-height:300px;justify-content:center;position:relative;box-sizing:border-box}
+.pair-msg-scroll{flex:1 1 auto;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;display:flex;flex-direction:column;justify-content:center}
 .pair-msg-scroll::-webkit-scrollbar{display:none;width:0;height:0}
-.pair-msg-scroll .pair-msg-list{margin:auto 0}
-.pair-msg-scroll.is-overflow .pair-msg-list{margin:0}
-@media(max-width:720px){.pair-msg-col{padding:0 4px;order:3;height:auto!important}.pair-msg-scroll{max-height:60vh}.pair-msg-scroll .pair-msg-list{margin:0}}
+@media(max-width:720px){.pair-msg-col{padding:0 4px;order:3;height:auto!important}.pair-msg-scroll{max-height:60vh}}
 .pair-msg-list{display:flex;flex-direction:column;gap:8px}
 .pair-msg-bubble{max-width:88%;padding:10px 14px;border-radius:14px;font-size:.84rem;line-height:1.6;position:relative;word-break:break-word}
 .pair-msg-bubble.from-a{align-self:flex-start;border-top-left-radius:4px}
@@ -4996,29 +4994,14 @@ function renderMsgList(p){
 
 function syncPairMsgHeight(){
   var col=document.querySelector('#pg-pairdetail .pair-msg-col');
-  var colA=document.querySelector('#pg-pairdetail .pair-char-col.col-a');
   var imgA=document.querySelector('#pg-pairdetail .pair-char-col.col-a .pair-char-img');
-  var scroll=document.querySelector('#pg-pairdetail .pair-msg-scroll');
-  if(!col||!imgA||!colA)return;
+  if(!col||!imgA)return;
   var apply=function(){
-    var imgRect=imgA.getBoundingClientRect();
-    var colRect=colA.getBoundingClientRect();
-    var topOffset=imgRect.top-colRect.top; // 이름/정보 라벨 높이
-    var h=imgRect.height;
-    if(h>0){
-      col.style.height=h+'px';
-      col.style.marginTop=topOffset+'px';
-    }
-    // 스크롤이 실제로 생기는지 체크해서 가운데/위쪽 정렬 전환
-    if(scroll){
-      if(scroll.scrollHeight>scroll.clientHeight+1){
-        scroll.classList.add('is-overflow');
-      }else{
-        scroll.classList.remove('is-overflow');
-      }
-    }
+    var h=imgA.getBoundingClientRect().height;
+    if(h>0){col.style.height=h+'px';}
   };
   apply();
+  // 이미지 로딩/리사이즈 대응
   requestAnimationFrame(apply);
   setTimeout(apply,100);
   setTimeout(apply,400);
