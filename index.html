@@ -7806,16 +7806,7 @@ function togglePmtEdTagPick(tid){
   if(idx===-1)pmtEdTags.push(tid);
   else pmtEdTags.splice(idx,1);
   renderPmtEdTags();
-  // 드롭다운 다시 열기 (방금 닫혔으니)
-  setTimeout(function(){
-    var drop=$('#pmtEdTagDrop');
-    if(drop && !drop.classList.contains('open')){
-      var fakeEvt={stopPropagation:function(){}};
-      togglePmtEdTagDrop(fakeEvt);
-    }
-  },20);
 }
-
 /* getAllPersonaTags: cfg.personaTags 등에서 전체 태그 끌어오기 */
 function getAllPersonaTags(){
   // 기존 코드가 cfg.personaTags 또는 비슷한 곳에 저장 — 없으면 빈 배열
