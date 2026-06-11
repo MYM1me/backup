@@ -7700,6 +7700,9 @@ function initPmtEditor(){
   document.getElementById('pmtImgIn').value='';
   setPmtPriv('');
   $('#pmtEdPrivPw').value='';
+  // 이전 모달의 잔존 DOM 제거 (renderPmtBlocks가 옛 textarea 값을 다시 주워가는 것 방지)
+  var _bl=document.getElementById('pmtBlockList');
+  if(_bl)_bl.innerHTML='';
   renderPmtKeywords();
   renderPmtEdTags();
   renderPmtBlocks();
