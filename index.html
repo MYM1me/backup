@@ -1039,6 +1039,66 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
   .pmt-modal.persona-modal .pmt-modal-content{
     padding:24px;
   }
+  .pmt-modal.persona-modal .pmt-modal-sd{
+    width:38%;
+    bottom:8px;
+    left:8px;
+  }
+}
+
+/* ── 페르소나 SD 이미지 오버레이 (캐릭터 이미지 좌측 하단) ── */
+.pmt-modal.persona-modal .pmt-modal-sd{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  width:30%;
+  max-width:160px;
+  aspect-ratio:auto;
+  z-index:3;
+  pointer-events:none;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));
+  animation:sdPop .35s cubic-bezier(.34,1.56,.64,1);
+}
+.pmt-modal.persona-modal .pmt-modal-sd img{
+  width:100%;
+  height:auto;
+  display:block;
+  object-fit:contain;
+}
+@keyframes sdPop{
+  from{opacity:0;transform:translateY(8px) scale(.85)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+/* 에디터: SD 이미지 업로드 박스 */
+.pmt-sd-upload{
+  border:1.5px dashed var(--border-h);
+  border-radius:8px;
+  padding:18px;
+  text-align:center;
+  cursor:pointer;
+  font-size:.76rem;
+  color:var(--text-light);
+  transition:all var(--tr);
+}
+.pmt-sd-upload:hover{border-color:var(--text-light)}
+.pmt-sd-preview{
+  margin-top:10px;
+  display:inline-block;
+  position:relative;
+}
+.pmt-sd-preview img{
+  max-width:120px;
+  max-height:120px;
+  border-radius:6px;
+  display:block;
+  border:1px solid var(--border);
+}
+.pmt-sd-preview .xb{
+  position:absolute;top:-6px;right:-6px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--text);color:var(--bg);
+  border:none;cursor:pointer;font-size:.7rem;
+  display:flex;align-items:center;justify-content:center;
 }
 
 /* ── 페르소나 모달 내부 디자인 (톤 통일 + B안: 가로선 라벨) ── */
@@ -1929,6 +1989,12 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <div class="pmt-img-list" id="pmtImgList"></div>
     </div>
     <div class="ef">
+      <label>SD 이미지 <span style="font-weight:300;color:var(--text-light);font-size:.68rem">(선택 · 1장 · 캐릭터 이미지 위에 겹쳐서 표시돼요)</span></label>
+      <div class="pmt-sd-upload" id="pmtSdUploadBox" onclick="document.getElementById('pmtSdIn').click()">클릭하여 SD 이미지 업로드</div>
+      <input type="file" id="pmtSdIn" accept="image/*" onchange="onPmtSdImg(event)" style="display:none">
+      <div id="pmtSdPreview"></div>
+    </div>
+    <div class="ef">
       <label>내용 <span style="font-weight:300;color:var(--text-light);font-size:.68rem">(드래그로 순서 변경)</span></label>
       <div class="pmt-block-list" id="pmtBlockList"></div>
       <button type="button" class="pmt-block-add" onclick="addPmtCustomAttr()">+ 커스텀 속성 추가</button>
@@ -1969,6 +2035,7 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
       <button class="pmt-modal-arrow left" id="pmtArrowL" onclick="pmtSlide(-1)" style="display:none"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
       <button class="pmt-modal-arrow right" id="pmtArrowR" onclick="pmtSlide(1)" style="display:none"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></button>
       <div class="pmt-modal-dots" id="pmtDots"></div>
+      <div class="pmt-modal-sd" id="pmtModalSd" style="display:none"><img id="pmtModalSdImg"></div>
     </div>
     <div class="pmt-modal-content">
       <div class="pmt-modal-scroll">
@@ -6591,6 +6658,30 @@ var addingPersonaTag=false; // 인라인 입력 모드
 // cfg.personaTags 보강 (최초 실행 시 빈 배열)
 if(!cfg.personaTags)cfg.personaTags=[];
 var pmtImgList=[];
+var pmtSdImg=''; // SD 이미지 (1장, base64)
+function onPmtSdImg(e){
+  var f=e.target.files&&e.target.files[0];
+  if(!f)return;
+  toast('SD 이미지 업로드 중...');
+  rdF(f,function(d){
+    pmtSdImg=d;
+    rPmtSdPreview();
+    toast('SD 이미지 업로드 완료');
+  },{maxW:400,quality:0.9,maxBytes:120000});
+  e.target.value='';
+}
+function rPmtSdPreview(){
+  var el=document.getElementById('pmtSdPreview');
+  if(!el)return;
+  if(!pmtSdImg){el.innerHTML='';return;}
+  el.innerHTML='<div class="pmt-sd-preview"><img src="'+pmtSdImg+'"><button class="xb" onclick="removePmtSdImg()">✕</button></div>';
+}
+function removePmtSdImg(){
+  pmtSdImg='';
+  rPmtSdPreview();
+  var inp=document.getElementById('pmtSdIn');
+  if(inp)inp.value='';
+}
 var pmtPage=0,pmt19Unlocked=false;
 var pmtSlideIdx=0,pmtSlideImgs=[];
 
@@ -7354,6 +7445,18 @@ function openPmtModal(id){
     if(cbtn2)cbtn2.style.display='';
     wrap.style.display='';
     showPmtCarousel(imgs);
+    // SD 이미지 오버레이
+    var sdBox=document.getElementById('pmtModalSd');
+    var sdImgEl=document.getElementById('pmtModalSdImg');
+    if(sdBox&&sdImgEl){
+      if(p.sdImg){
+        sdImgEl.src=p.sdImg;
+        sdBox.style.display='';
+      }else{
+        sdImgEl.src='';
+        sdBox.style.display='none';
+      }
+    }
     $('#pmtPwArea').style.display='none';
     $('#pmtBodyArea').style.display='';
     renderPmtModalBlocks(p);
@@ -7679,6 +7782,8 @@ function initPmtEditor(){
       }
       pmtImgList=getImgs(p).slice();
       rPmtImgList();
+      pmtSdImg=p.sdImg||'';
+      rPmtSdPreview();
       setPmtPriv(p.priv||'');
       if(p.priv==='pw')$('#pmtEdPrivPw').value=p.privPw||'';
       renderPmtKeywords();
@@ -7698,6 +7803,10 @@ function initPmtEditor(){
   pmtImgList=[];
   rPmtImgList();
   document.getElementById('pmtImgIn').value='';
+  pmtSdImg='';
+  rPmtSdPreview();
+  var _sdIn=document.getElementById('pmtSdIn');
+  if(_sdIn)_sdIn.value='';
   setPmtPriv('');
   $('#pmtEdPrivPw').value='';
   // 이전 모달의 잔존 DOM 제거 (renderPmtBlocks가 옛 textarea 값을 다시 주워가는 것 방지)
@@ -7952,6 +8061,7 @@ function savePrompt(){
     blockOrder:cleanOrder,
     imgs:pmtImgList.slice(),
     img:pmtImgList[0],
+    sdImg:pmtSdImg||'',
     priv:priv,
     privPw:privPw
   };
