@@ -9498,7 +9498,8 @@ function showLoginUI(){
 
 // 게이트 화면에서 탭/로고 잠그기
 function applyGateLock(){
-  // 페어/페르소나 탭 강제 숨김
+  // 시리즈/페어/페르소나 탭 강제 숨김
+  var st=$('#seriesTab'); if(st)st.style.display='none';
   var pt=$('#pairTab'); if(pt)pt.style.display='none';
   var prt=$('#promptTab'); if(prt)prt.style.display='none';
   var ct=$('#customTabLinks'); if(ct)ct.style.display='none';
