@@ -568,6 +568,10 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
 .series-grid{gap:12px}
 .sc{position:relative;aspect-ratio:1;background:var(--card);box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1)}
 .sc:hover{box-shadow:var(--shadow-h);transform:translateY(-2px)}
+.sc.dragging{opacity:.4;transform:scale(.95)}
+.sc-drag-handle{position:absolute;top:8px;left:8px;width:28px;height:28px;border-radius:7px;background:rgba(0,0,0,.55);color:#fff;border:none;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:.72rem;opacity:0;transition:opacity .2s;z-index:3;line-height:1;letter-spacing:1px;backdrop-filter:blur(6px)}
+.sc:hover .sc-drag-handle{opacity:1}
+.sc-drag-handle:active{cursor:grabbing}
 .sc-img{position:absolute;inset:0;background:var(--bg2);display:flex;align-items:center;justify-content:center}
 .sc-img img{width:100%;height:100%;object-fit:cover}
 .sc-img .sc-placeholder{font-size:2rem;opacity:.15}
@@ -3773,9 +3777,11 @@ function rSeries(){
   if(seriesPage<0)seriesPage=0;
   var start=seriesPage*perPage;
   var paged=cats.slice(start,start+perPage);
-  grid.innerHTML=paged.map(function(c){
+    grid.innerHTML=paged.map(function(c,localIdx){
+    var idx=start+localIdx;
     var cnt=ps.filter(function(p){return p.cid===c.id && (isAdmin||!p.priv||p.priv===''||p.priv==='pw')}).length;
-    var html='<div class="sc" onclick="viewCatId=\''+c.id+'\';go(\'catview\')">';
+    var html='<div class="sc" data-sc-idx="'+idx+'" '+(isAdmin?'draggable="true" ':'')+'onclick="openCatViewSafe(\''+c.id+'\')">';
+    if(isAdmin)html+='<div class="sc-drag-handle" onmousedown="event.stopPropagation()" title="드래그하여 순서 변경">⋮⋮</div>';
     html+='<div class="sc-img">';
     if(c.thumb)html+='<img src="'+c.thumb+'" loading="lazy">';
     else html+='<div class="sc-placeholder" style="color:'+c.color+'">■</div>';
@@ -3822,6 +3828,53 @@ function rSeries(){
       pagi.innerHTML=h;
     }else{pagi.innerHTML='';}
   }
+  // 관리자 드래그 정렬 바인딩
+  if(isAdmin)initSeriesDrag();
+}
+
+/* ── Series drag-to-reorder (페어 패턴 복제) ── */
+var seriesDragIdx=null;
+var seriesDragged=false;
+function initSeriesDrag(){
+  var grid=$('#seriesGrid');if(!grid)return;
+  var cards=grid.querySelectorAll('.sc[draggable]');
+  cards.forEach(function(card){
+    card.addEventListener('dragstart',function(e){
+      seriesDragIdx=parseInt(card.dataset.scIdx);
+      seriesDragged=true;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',function(){
+      card.classList.remove('dragging');
+      seriesDragIdx=null;
+      setTimeout(function(){seriesDragged=false},50);
+      grid.querySelectorAll('.sc').forEach(function(c){c.style.borderTop='';c.style.borderLeft='';});
+    });
+    card.addEventListener('dragover',function(e){
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      var overIdx=parseInt(card.dataset.scIdx);
+      if(seriesDragIdx===null||overIdx===seriesDragIdx)return;
+      grid.querySelectorAll('.sc').forEach(function(c){c.style.borderTop='';c.style.borderLeft='';});
+      card.style.borderLeft='2px solid var(--accent)';
+    });
+    card.addEventListener('dragleave',function(){
+      card.style.borderTop='';card.style.borderLeft='';
+    });
+    card.addEventListener('drop',function(e){
+      e.preventDefault();
+      var toIdx=parseInt(card.dataset.scIdx);
+      if(seriesDragIdx===null||seriesDragIdx===toIdx)return;
+      var item=cats.splice(seriesDragIdx,1)[0];
+      cats.splice(toIdx,0,item);
+      sv();rSeries();toast('순서 변경됨');
+    });
+  });
+}
+// 드래그 직후의 클릭으로 상세가 열리는 것 방지
+function openCatViewSafe(id){
+  if(seriesDragged)return;
+  viewCatId=id;go('catview');
 }
 
 function toggleScMenu(id,e){
