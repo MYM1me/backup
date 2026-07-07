@@ -8869,12 +8869,14 @@ function rCustomTab(tabId){
           '<span class="memo-card-date">'+fDateOnly(item.ts)+'</span>'+
         '</div></div>';
     }).join('');
-    // 메모형 그리드 높이 고정 (15개 기준)
+    // 메모형 그리드 높이 고정 (열 수에 맞춰 줄 수 계산)
     setTimeout(function(){
       var cards=grid.querySelectorAll('.memo-card');
       if(cards.length){
         var cardH=cards[0].offsetHeight;
-        grid.style.minHeight=(cardH*pageSize+8*(pageSize-1))+'px';
+        var cols=Math.max(1,Math.round(grid.offsetWidth/(cards[0].offsetWidth+14)));
+        var rows=Math.ceil(pageSize/cols);
+        grid.style.minHeight=(cardH*rows+14*(rows-1))+'px';
       }
     },30);
   }
