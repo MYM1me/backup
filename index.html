@@ -405,6 +405,23 @@ details[open] .fold-summary::before{transform:rotate(90deg)}
 .tb-select{padding:3px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.74rem;outline:none;cursor:pointer;height:28px;transition:border var(--tr);font-family:inherit;flex-shrink:0}
 .tb-select:focus{border-color:var(--text)}
 
+/* ── Divider menu (toolbar) ── */
+.tb-hr-wrap{position:relative;display:inline-flex;align-items:center;flex-shrink:0}
+.hr-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--border-h);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.14);padding:8px;z-index:300;width:180px}
+.hr-menu.open{display:block;animation:fin .15s ease}
+.hr-menu-title{font-size:.64rem;font-weight:600;color:var(--text-light);letter-spacing:.05em;text-transform:uppercase;margin:2px 4px 6px}
+.hr-opt{display:block;width:100%;background:none;border:none;border-radius:6px;padding:7px 9px;cursor:pointer;text-align:left;transition:background var(--tr)}
+.hr-opt:hover{background:var(--bg2)}
+.hr-opt-label{display:block;font-size:.72rem;color:var(--text-sub);margin-bottom:2px}
+.hr-opt hr{margin:5px 0!important;pointer-events:none}
+
+/* ── Divider styles (editor + view) ── */
+hr.hr-short,hr.hr-full,hr.hr-dashed,hr.hr-thick{border:0;background:none;box-sizing:border-box}
+hr.hr-short{width:56px;height:0;margin:22px auto;border-top:2px solid var(--text-light)}
+hr.hr-full{width:100%;height:0;margin:24px 0;border-top:1px solid var(--border-h)}
+hr.hr-dashed{width:100%;height:0;margin:24px 0;border-top:1px dashed var(--text-light)}
+hr.hr-thick{width:100%;height:0;margin:26px 0;border-top:3px solid var(--text-sub)}
+
 /* ── Color Picker Button (toolbar) ── */
 .tb-color-wrap{position:relative;display:inline-flex;align-items:center;flex-shrink:0}
 .tb-color-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:28px;height:28px;border-radius:5px;border:none;background:none;cursor:pointer;padding:2px 4px;gap:2px;transition:background var(--tr)}
@@ -2070,6 +2087,16 @@ footer{text-align:center;padding:32px;color:var(--text-light);font-size:.68rem;b
               <button class="tb-btn" onclick="insertLink()" title="링크">🔗</button>
               <button class="tb-btn" onclick="insertHtmlCode()" title="HTML 삽입" style="font-size:.64rem;font-weight:700;width:auto;padding:0 6px">&lt;/&gt;</button>
               <button class="tb-btn" onclick="insertFold()" title="접기/펼치기 삽입" style="font-size:.7rem;font-weight:700;width:auto;padding:0 6px">▼접기</button>
+              <div class="tb-hr-wrap" id="hrWrap">
+                <button class="tb-btn" onmousedown="event.preventDefault();toggleHrMenu(event)" title="구분선 삽입" style="font-size:.72rem;font-weight:700;width:auto;padding:0 6px">— 선</button>
+                <div class="hr-menu" id="hrMenu">
+                  <div class="hr-menu-title">구분선</div>
+                  <button class="hr-opt" onmousedown="event.preventDefault();insertDivider('short')"><span class="hr-opt-label">짧게 (가운데)</span><hr class="hr-short"></button>
+                  <button class="hr-opt" onmousedown="event.preventDefault();insertDivider('full')"><span class="hr-opt-label">기본</span><hr class="hr-full"></button>
+                  <button class="hr-opt" onmousedown="event.preventDefault();insertDivider('dashed')"><span class="hr-opt-label">점선</span><hr class="hr-dashed"></button>
+                  <button class="hr-opt" onmousedown="event.preventDefault();insertDivider('thick')"><span class="hr-opt-label">굵게</span><hr class="hr-thick"></button>
+                </div>
+              </div>
               <button class="tb-btn" onclick="exec('removeFormat')" title="서식 제거">⊘</button>
             </div>
           </div>
@@ -3271,6 +3298,17 @@ function insertFold(){
   var uid='fold_'+Date.now();
   var html='<details class="fold-block"><summary class="fold-summary">'+label+'</summary><div class="fold-content"><p>여기에 내용을 작성하세요</p></div></details><p><br></p>';
   document.execCommand('insertHTML',false,html);
+  $('#eBod').focus();
+}
+
+function toggleHrMenu(e){var m=$('#hrMenu');var open=m.classList.toggle('open');if(open){setTimeout(function(){document.addEventListener('click',closeHrMenuOutside,{once:true})},0)}}
+function closeHrMenu(){$('#hrMenu').classList.remove('open')}
+function closeHrMenuOutside(e){if(!$('#hrWrap').contains(e.target))closeHrMenu()}
+function insertDivider(style){
+  closeHrMenu();
+  var cls={short:'hr-short',full:'hr-full',dashed:'hr-dashed',thick:'hr-thick'}[style]||'hr-full';
+  $('#eBod').focus();
+  document.execCommand('insertHTML',false,'<hr class="'+cls+'"><p><br></p>');
   $('#eBod').focus();
 }
 
